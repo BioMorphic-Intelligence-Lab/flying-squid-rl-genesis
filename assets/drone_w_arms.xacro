@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="drone_w_arms">
+
+
+    <xacro:property name="min_ax" value="-1"/>
+    <xacro:property name="max_ax" value="1"/>
+
+    <!-- Include the robot macro -->
+    <xacro:include filename="drone.xacro"/>
+    <xacro:include filename="dummy_arm.xacro"/>
+    <!-- Add Drone Base -->
+    <xacro:drone_base prefix="drone"/>
+    <!-- Add dummy arms -->
+    <xacro:flex_arm prefix="arm1" L="0.3" n="10" m="1.0" xyz=" 0.175  0.175 0" rpy="3.141 0 -0.7854"/>
+    <xacro:flex_arm prefix="arm2" L="0.3" n="10" m="1.0" xyz=" 0.175 -0.175 0" rpy="3.141 0 -2.3562"/>
+    <xacro:flex_arm prefix="arm3" L="0.3" n="10" m="1.0" xyz="-0.175 -0.175 0" rpy="3.141 0 2.3562"/>
+    <xacro:flex_arm prefix="arm4" L="0.3" n="10" m="1.0" xyz="-0.175  0.175 0" rpy="3.141 0 0.7854"/>
+
+    <!-- Define dummy links for motion generation -->
+    <link name="world"/>
+    <link name="p1"/>
+    <link name="p2"/>
+    <link name="p3"/>
+    
+    <joint name="x_pos" type="prismatic">
+        <parent link="world" />
+        <child link="p1" />
+        <axis xyz="1 0 0"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="100" velocity="100"/>
+    </joint>
+
+    <joint name="y_pos" type="prismatic">
+        <parent link="p1" />
+        <child link="p2" />
+        <axis xyz="0 1 0"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="100" velocity="100"/>
+    </joint>
+
+    <joint name="z_pos" type="prismatic">
+        <parent link="p2" />
+        <child link="p3" />
+        <axis xyz="0 0 1"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="100" velocity="100"/>
+    </joint>
+
+    <joint name="base_joint" type="continuous">
+        <parent link="p3" />
+        <child link="drone_base" />
+        <axis xyz="0 0 1"/>
+        <dynamics damping="100.0" friction="0.0"/>
+    </joint>
+</robot>

@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="dummy_arm">
+
+    <!-- Macro to calculate cylinder inertia -->
+    <xacro:macro name="cylinder_inertia" params="radius length mass">
+        <inertia ixx="${0.25 * mass * radius * radius + (1 / 12) * mass * length * length}" 
+                 ixy="0.0" ixz="0.0" 
+                 iyy="${0.25 * mass * radius * radius + (1 / 12) * mass * length * length}" 
+                 iyz="0.0" 
+                 izz="${0.5 * mass * radius * radius}" />
+    </xacro:macro>
+
+    <!-- Macro to calculate sphere inertia -->
+    <xacro:macro name="sphere_inertia" params="radius mass">
+        <inertia ixx="${2/5 * mass * radius * radius}" 
+                 ixy="0.0" ixz="0.0" 
+                 iyy="${2/5 * mass * radius * radius}" 
+                 iyz="0.0" 
+                 izz="${2/5 * mass * radius * radius}" />
+    </xacro:macro>
+
+    <xacro:property name="width" value="0.01" />
+    <xacro:property name="sphere_radius" value="${width}" />    
+
+    <!-- Macro for generating the flexible arm -->
+    <xacro:macro name="flex_arm" params="prefix L n m xyz rpy">
+        <!-- Create the base link -->
+        <link name="${prefix}_base"/>
+    
+        <!-- First joint between the base and the first link -->
+        <xacro:property name="l" value="${L / n}" />
+        <link name="${prefix}_link_1">
+            <visual>
+                <geometry>
+                    <mesh filename="./meshes/single_segment.dae" scale="0.0006 0.0006 ${0.003 / n}"/>
+                </geometry>
+                <origin xyz="0 0 ${l / 2}" />
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="${width}" length="${l}" />
+                </geometry>
+                <origin xyz="0 0 ${l / 2}" />
+            </collision>
+            <inertial>
+                <mass value="${m / (n+1)}" />
+                <xacro:cylinder_inertia radius="${width}" length="${l}" mass="${m / (n+1)}" />
+            </inertial>
+        </link>
+
+        <joint name="${prefix}_joint_1" type="revolute">
+            <parent link="${prefix}_base" />
+            <child link="${prefix}_link_1" />
+            <axis xyz="1 0 0" />
+            <origin xyz="${xyz}" rpy="${rpy}" />
+            <limit effort="10.0" velocity="1.0" lower="-1.57" upper="1.57" />
+        </joint>
+
+        <!-- Generate the rest of the chain -->
+        <xacro:recursive_flex_arm prefix="${prefix}" L="${L}" n="${n - 1}" current_link="1" />
+    </xacro:macro>
+
+    <!-- Recursive macro for generating subsequent links -->
+    <xacro:macro name="recursive_flex_arm" params="prefix L n current_link">
+        <xacro:if value="${n > 0}">
+
+            <xacro:property name="N" value="${n + current_link}" />
+            <xacro:property name="l" value="${L / N}" />
+
+            <!-- Create the next link -->
+            <link name="${prefix}_link_${current_link + 1}">
+                <visual>
+                    <geometry>
+                        <mesh filename="./meshes/single_segment.dae" scale="0.0006 0.0006 ${0.003 / N}"/>
+                    </geometry>
+                    <origin xyz="0 0 ${l / 2}" />
+                </visual>
+                <collision>
+                    <geometry>
+                        <cylinder radius="${width}" length="${l}" />
+                    </geometry>
+                    <origin xyz="0 0 ${l / 2}" />
+                </collision>
+                <inertial>
+                    <mass value="${m / (N +1)}" />
+                    <xacro:cylinder_inertia radius="${width}" length="${l}" mass="${m / (N +1)}" />
+                </inertial>
+            </link>
+
+            <!-- Create the revolute joint -->
+            <joint name="${prefix}_joint_${current_link + 1}" type="revolute">
+                <parent link="${prefix}_link_${current_link}" />
+                <child link="${prefix}_link_${current_link + 1}" />
+                <axis xyz="1 0 0" />
+                <origin xyz="0 0 ${l}" rpy="0 0 0" />
+                <limit effort="10.0" velocity="1.0" lower="-1.57" upper="1.57" />
+            </joint>
+
+            <!-- Recursively generate the rest of the chain -->
+            <xacro:recursive_flex_arm prefix="${prefix}" L="${L}" n="${n - 1}" current_link="${current_link + 1}" />
+        </xacro:if>
+
+        <!-- Add sphere at the end of the last link -->
+        <xacro:unless value="${n > 0}">
+            <link name="${prefix}_sphere">
+                <visual>
+                    <geometry>
+                        <sphere radius="${sphere_radius}" />
+                    </geometry>
+                    <origin xyz="0 0 ${sphere_radius}" />
+                </visual>
+                <collision>
+                    <geometry>
+                        <sphere radius="${sphere_radius}" />
+                    </geometry>
+                    <origin xyz="0 0 ${sphere_radius}" />
+                </collision>
+                <inertial>
+                    <mass value="${m / (N + 1)}" />
+                    <xacro:sphere_inertia radius="${sphere_radius}" mass="${m / (N + 1)}" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_fixed_joint_sphere" type="fixed">
+                <parent link="${prefix}_link_${current_link}" />
+                <child link="${prefix}_sphere" />
+                <origin xyz="0 0 ${l-sphere_radius}" rpy="0 0 0" />
+            </joint>
+        </xacro:unless>
+    </xacro:macro>
+</robot>
