@@ -18,7 +18,7 @@ def main(argv):
         os.makedirs(logdir)
     
     env = VecMonitor(
-        FlyingSquidEnv(num_envs=1, max_steps=3000,
+        FlyingSquidEnv(num_envs=25, max_steps=3000,
                        dt=0.1, history_length=100)
     )
 
@@ -42,7 +42,7 @@ def main(argv):
                             log_std_init = 0,
                             ortho_init=True)
         
-        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir,
+        model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=logdir,
                      policy_kwargs=policy_kwargs)
     
     # Train the agent

@@ -24,10 +24,10 @@ class FlyingSquidEnv(VecEnv):
             print("ERROR! Current no other device than CPU supported")
         self.vis = vis
 
-        # Action Space: [sin(theta), cos(theta), ||v||, omega] aka
+        # Action Space: [theta, ||v||, omega] aka
         #    - angle and magnitude of desired linear speed in body frame
         #    - desired angular velocity
-        action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(4,))
+        action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(3,))
         # Observation Space { 'des_dir': [sin(phi), cos(phi)]
         #                    'contacts': [[FR, FL, RL, RR] * history_length]
         #                         'att': [[sin(theta), cos(theta)] * hisotry_length]  } 
@@ -242,18 +242,18 @@ class FlyingSquidEnv(VecEnv):
         self.step_counts += 1
 
         self.actions = np.clip(
-            self.actions * [1, 1, self.MAX_LIN_VEL, self.MAX_ROT_VEL],
-            a_min=[-1, -1, 0, -self.MAX_ROT_VEL],
-            a_max=[1, 1, self.MAX_LIN_VEL, self.MAX_ROT_VEL]
-        ).reshape([self.num_envs, 4])  
-
-
-        v_des = self.actions[:, 2, np.newaxis] * self.actions[:, :2] * self.MAX_LIN_VEL
-        omega_des = self.actions[:, 3] * self.MAX_ROT_VEL
+            self.actions * [np.pi, self.MAX_LIN_VEL, self.MAX_ROT_VEL],
+            a_min=[-np.pi, 0, -self.MAX_ROT_VEL],
+            a_max=[np.pi, self.MAX_LIN_VEL, self.MAX_ROT_VEL]
+        ).reshape([self.num_envs, 3])  
 
         # Find current state
         p = self.drone.get_dofs_position()
         v = self.drone.get_dofs_velocity()
+
+        # Extract the commands from the actions
+        v_des = self.actions[:, 1, np.newaxis] * np.hstack([np.sin(self.actions[:, 0]), np.cos(self.actions[:, 0])]) * self.MAX_LIN_VEL
+        omega_des = self.actions[:, 2] * self.MAX_ROT_VEL
         
         # Apply torque within limits
         lin_ctrl = self._lin_vel_ctrl(v=v[:, :3], v_des=v_des)
@@ -299,9 +299,12 @@ class FlyingSquidEnv(VecEnv):
         return self._get_observation(), rewards, dones, infos
     
     def _get_observation(self):        
+
+        contact_hist = np.concatenate([list(contact) for contact in self.contact_hist], axis=1)
+        att_hist = np.concatenate([list(att) for att in self.att_hist], axis=1)
         return { 'des_dir': self.des_dir,
-                'contacts': list(self.contact_hist),
-                     'att': list(self.att_hist)}
+                'contacts': contact_hist,
+                     'att': att_hist}
     
     def close(self):
         pass
