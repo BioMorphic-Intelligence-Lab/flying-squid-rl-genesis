@@ -3,7 +3,7 @@ import genesis as gs
 from stable_baselines3 import PPO
 from env import FlyingSquidEnv
 
-env = FlyingSquidEnv(num_envs=2, vis=True, max_steps=500,
+env = FlyingSquidEnv(num_envs=50, vis=True, max_steps=500,
                      dt=0.01, history_length=5)
 
 a = np.zeros([env.num_envs, 3])

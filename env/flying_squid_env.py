@@ -52,7 +52,7 @@ class FlyingSquidEnv(VecEnv):
         self.HISTORY_LENGTH = history_length
         self.CORRIDOR_WIDTH_RANGE = corridor_width_range
         self.CORRIDOR_ANGLE_RANGE = corridor_angle_range
-        self.CORRIDOR_BOX_SIZE = np.array([0.1, 10, 2])
+        self.CORRIDOR_BOX_SIZE = np.array([0.1, 50, 2])
         self.FLIGHT_HEIGHT=2.25
 
         if p_ini is None:
@@ -63,7 +63,7 @@ class FlyingSquidEnv(VecEnv):
             grid_positions = np.stack([x_idx.ravel(), y_idx.ravel()], axis=1)[:self.num_envs]
             
             # Center the grid at the origin
-            grid_positions = (grid_positions - np.mean(grid_positions, axis=0)) * 1.5 * max(self.CORRIDOR_BOX_SIZE)
+            grid_positions = (grid_positions - np.mean(grid_positions, axis=0)) * 2 * max(self.CORRIDOR_BOX_SIZE)
             self.P_INI = np.column_stack([grid_positions, np.ones(self.num_envs) * 1.0])  # Add Z coordinate
         else:
             self.P_INI = p_ini
@@ -257,7 +257,7 @@ class FlyingSquidEnv(VecEnv):
         # Extract the commands from the actions
         # The angle is in the body frame so we rotate it accordingly
         angle = np.arctan2(np.sin(self.actions[:, 0] - p[:, 3]), np.cos(self.actions[:, 0] - p[:, 3])) 
-        v_des = (self.actions[:, 1, np.newaxis] * np.vstack([np.sin(angle), np.cos(angle)]) * self.MAX_LIN_VEL).T
+        v_des = (self.actions[:, 1, np.newaxis] * np.vstack([np.sin(angle), np.cos(angle)]).T * self.MAX_LIN_VEL)
         omega_des = self.actions[:, 2] * self.MAX_ROT_VEL
         
         # Apply torque within limits
