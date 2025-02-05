@@ -2,19 +2,14 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="drone_w_arms">
 
 
-    <xacro:property name="min_ax" value="-1"/>
-    <xacro:property name="max_ax" value="1"/>
+    <xacro:property name="min_ax" value="-100"/>
+    <xacro:property name="max_ax" value="100"/>
 
     <!-- Include the robot macro -->
     <xacro:include filename="drone.xacro"/>
     <xacro:include filename="dummy_arm.xacro"/>
     <!-- Add Drone Base -->
     <xacro:drone_base prefix="drone"/>
-    <!-- Add dummy arms -->
-    <xacro:flex_arm prefix="arm1" L="0.3" n="10" m="1.0" xyz=" 0.175  0.175 0" rpy="3.141 0 -0.7854"/>
-    <xacro:flex_arm prefix="arm2" L="0.3" n="10" m="1.0" xyz=" 0.175 -0.175 0" rpy="3.141 0 -2.3562"/>
-    <xacro:flex_arm prefix="arm3" L="0.3" n="10" m="1.0" xyz="-0.175 -0.175 0" rpy="3.141 0 2.3562"/>
-    <xacro:flex_arm prefix="arm4" L="0.3" n="10" m="1.0" xyz="-0.175  0.175 0" rpy="3.141 0 0.7854"/>
 
     <!-- Define dummy links for motion generation -->
     <link name="world"/>
@@ -48,5 +43,28 @@
         <child link="drone_base" />
         <axis xyz="0 0 1"/>
         <dynamics damping="100.0" friction="0.0"/>
+    </joint>
+
+    <!-- Add dummy arms -->
+    <xacro:flex_arm prefix="arm1" L="0.3" n="10" m="0.1" xyz=" 0.175  0.175 0" rpy="3.141 0 -0.7854"/>
+    <xacro:flex_arm prefix="arm2" L="0.3" n="10" m="0.1" xyz=" 0.175 -0.175 0" rpy="3.141 0 -2.3562"/>
+    <xacro:flex_arm prefix="arm3" L="0.3" n="10" m="0.1" xyz="-0.175 -0.175 0" rpy="3.141 0 2.3562"/>
+    <xacro:flex_arm prefix="arm4" L="0.3" n="10" m="0.1" xyz="-0.175  0.175 0" rpy="3.141 0 0.7854"/>
+
+    <joint name="arm1_joint" type="fixed">
+        <parent link="drone_base"/>
+        <child link="arm1_base" /> 
+    </joint>
+    <joint name="arm2_joint" type="fixed">
+        <parent link="drone_base"/>
+        <child link="arm2_base" /> 
+    </joint>
+    <joint name="arm3_joint" type="fixed">
+        <parent link="drone_base"/>
+        <child link="arm3_base" /> 
+    </joint>
+    <joint name="arm4_joint" type="fixed">
+        <parent link="drone_base"/>
+        <child link="arm4_base" /> 
     </joint>
 </robot>

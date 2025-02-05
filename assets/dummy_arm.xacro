@@ -32,7 +32,7 @@
         <link name="${prefix}_link_1">
             <visual>
                 <geometry>
-                    <mesh filename="./meshes/single_segment.dae" scale="0.0006 0.0006 ${0.003 / n}"/>
+                    <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 ${0.003 / n}"/>
                 </geometry>
                 <origin xyz="0 0 ${l / 2}" />
             </visual>
@@ -71,7 +71,7 @@
             <link name="${prefix}_link_${current_link + 1}">
                 <visual>
                     <geometry>
-                        <mesh filename="./meshes/single_segment.dae" scale="0.0006 0.0006 ${0.003 / N}"/>
+                        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 ${0.003 / N}"/>
                     </geometry>
                     <origin xyz="0 0 ${l / 2}" />
                 </visual>

@@ -99,52 +99,81 @@
       <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
   </link>
-  <joint name="drone_prop1joint" type="continous">
+  <joint name="drone_prop1joint" type="fixed">
     <parent link="drone_base"/>
     <child link="drone_prop1"/>
-    <limit effort="3000" velocity="10000.0"/>
     <origin rpy="0 0 0" xyz="0.175 0.175 0.04"/>
-    <axis xyz="0 0 1"/>
+    <!--<limit effort="3000" velocity="10000.0"/>
+            <axis xyz="0 0 1" />-->
   </joint>
-  <joint name="drone_prop2joint" type="continous">
+  <joint name="drone_prop2joint" type="fixed">
     <parent link="drone_base"/>
     <child link="drone_prop2"/>
-    <limit effort="3000" velocity="10000.0"/>
     <origin rpy="0 0 0" xyz="-0.175 0.175 0.04"/>
-    <axis xyz="0 0 1"/>
+    <!--<limit effort="3000" velocity="10000.0"/>
+            <axis xyz="0 0 1" />-->
   </joint>
-  <joint name="drone_prop3joint" type="continous">
+  <joint name="drone_prop3joint" type="fixed">
     <parent link="drone_base"/>
     <child link="drone_prop3"/>
-    <limit effort="3000" velocity="10000.0"/>
     <origin rpy="0 0 0" xyz="-0.175 -0.175 0.04"/>
-    <axis xyz="0 0 1"/>
+    <!--<limit effort="3000" velocity="10000.0"/>
+            <axis xyz="0 0 1" />-->
   </joint>
-  <joint name="drone_prop4joint" type="continous">
+  <joint name="drone_prop4joint" type="fixed">
     <parent link="drone_base"/>
     <child link="drone_prop4"/>
-    <limit effort="3000" velocity="10000.0"/>
     <origin rpy="0 0 0" xyz="0.175 -0.175 0.04"/>
+    <!--<limit effort="3000" velocity="10000.0"/>
+            <axis xyz="0 0 1" />-->
+  </joint>
+  <!-- Define dummy links for motion generation -->
+  <link name="world"/>
+  <link name="p1"/>
+  <link name="p2"/>
+  <link name="p3"/>
+  <joint name="x_pos" type="prismatic">
+    <parent link="world"/>
+    <child link="p1"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="100" lower="-100" upper="100" velocity="100"/>
+  </joint>
+  <joint name="y_pos" type="prismatic">
+    <parent link="p1"/>
+    <child link="p2"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" lower="-100" upper="100" velocity="100"/>
+  </joint>
+  <joint name="z_pos" type="prismatic">
+    <parent link="p2"/>
+    <child link="p3"/>
     <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-100" upper="100" velocity="100"/>
+  </joint>
+  <joint name="base_joint" type="continuous">
+    <parent link="p3"/>
+    <child link="drone_base"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="100.0" friction="0.0"/>
   </joint>
   <!-- Create the base link -->
   <link name="arm1_base"/>
   <link name="arm1_link_1">
     <visual>
       <geometry>
-        <mesh filename="./meshes/SingleSegment.dae" scale="1.0 1.0 1.0"/>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.15" radius="0.01"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="0.0006333333333333333" ixy="0.0" ixz="0.0" iyy="0.0006333333333333333" iyz="0.0" izz="1.6666666666666667e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
     </inertial>
   </link>
   <joint name="arm1_joint_1" type="revolute">
@@ -158,19 +187,19 @@
   <link name="arm1_link_2">
     <visual>
       <geometry>
-        <mesh filename="./meshes/SingleSegment.dae" scale="1.0 1.0 1.0"/>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.15" radius="0.01"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="0.0006333333333333333" ixy="0.0" ixz="0.0" iyy="0.0006333333333333333" iyz="0.0" izz="1.6666666666666667e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
     </inertial>
   </link>
   <!-- Create the revolute joint -->
@@ -178,7 +207,223 @@
     <parent link="arm1_link_1"/>
     <child link="arm1_link_2"/>
     <axis xyz="1 0 0"/>
-    <origin rpy="0 0 0" xyz="0 0 0.15"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm1_link_3">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm1_joint_3" type="revolute">
+    <parent link="arm1_link_2"/>
+    <child link="arm1_link_3"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm1_link_4">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm1_joint_4" type="revolute">
+    <parent link="arm1_link_3"/>
+    <child link="arm1_link_4"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm1_link_5">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm1_joint_5" type="revolute">
+    <parent link="arm1_link_4"/>
+    <child link="arm1_link_5"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm1_link_6">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm1_joint_6" type="revolute">
+    <parent link="arm1_link_5"/>
+    <child link="arm1_link_6"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm1_link_7">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm1_joint_7" type="revolute">
+    <parent link="arm1_link_6"/>
+    <child link="arm1_link_7"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm1_link_8">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm1_joint_8" type="revolute">
+    <parent link="arm1_link_7"/>
+    <child link="arm1_link_8"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm1_link_9">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm1_joint_9" type="revolute">
+    <parent link="arm1_link_8"/>
+    <child link="arm1_link_9"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm1_link_10">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm1_joint_10" type="revolute">
+    <parent link="arm1_link_9"/>
+    <child link="arm1_link_10"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
     <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
   </joint>
   <link name="arm1_sphere">
@@ -195,33 +440,33 @@
       <origin xyz="0 0 0.01"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="1.3333333333333333e-05" ixy="0.0" ixz="0.0" iyy="1.3333333333333333e-05" iyz="0.0" izz="1.3333333333333333e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="3.636363636363637e-07" ixy="0.0" ixz="0.0" iyy="3.636363636363637e-07" iyz="0.0" izz="3.636363636363637e-07"/>
     </inertial>
   </link>
   <joint name="arm1_fixed_joint_sphere" type="fixed">
-    <parent link="arm1_link_2"/>
+    <parent link="arm1_link_10"/>
     <child link="arm1_sphere"/>
-    <origin rpy="0 0 0" xyz="0 0 0.13999999999999999"/>
+    <origin rpy="0 0 0" xyz="0 0 0.019999999999999997"/>
   </joint>
   <!-- Create the base link -->
   <link name="arm2_base"/>
   <link name="arm2_link_1">
     <visual>
       <geometry>
-        <mesh filename="./meshes/SingleSegment.dae" scale="1.0 1.0 1.0"/>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.15" radius="0.01"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="0.0006333333333333333" ixy="0.0" ixz="0.0" iyy="0.0006333333333333333" iyz="0.0" izz="1.6666666666666667e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
     </inertial>
   </link>
   <joint name="arm2_joint_1" type="revolute">
@@ -235,19 +480,19 @@
   <link name="arm2_link_2">
     <visual>
       <geometry>
-        <mesh filename="./meshes/SingleSegment.dae" scale="1.0 1.0 1.0"/>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.15" radius="0.01"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="0.0006333333333333333" ixy="0.0" ixz="0.0" iyy="0.0006333333333333333" iyz="0.0" izz="1.6666666666666667e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
     </inertial>
   </link>
   <!-- Create the revolute joint -->
@@ -255,7 +500,223 @@
     <parent link="arm2_link_1"/>
     <child link="arm2_link_2"/>
     <axis xyz="1 0 0"/>
-    <origin rpy="0 0 0" xyz="0 0 0.15"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm2_link_3">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm2_joint_3" type="revolute">
+    <parent link="arm2_link_2"/>
+    <child link="arm2_link_3"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm2_link_4">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm2_joint_4" type="revolute">
+    <parent link="arm2_link_3"/>
+    <child link="arm2_link_4"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm2_link_5">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm2_joint_5" type="revolute">
+    <parent link="arm2_link_4"/>
+    <child link="arm2_link_5"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm2_link_6">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm2_joint_6" type="revolute">
+    <parent link="arm2_link_5"/>
+    <child link="arm2_link_6"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm2_link_7">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm2_joint_7" type="revolute">
+    <parent link="arm2_link_6"/>
+    <child link="arm2_link_7"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm2_link_8">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm2_joint_8" type="revolute">
+    <parent link="arm2_link_7"/>
+    <child link="arm2_link_8"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm2_link_9">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm2_joint_9" type="revolute">
+    <parent link="arm2_link_8"/>
+    <child link="arm2_link_9"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm2_link_10">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm2_joint_10" type="revolute">
+    <parent link="arm2_link_9"/>
+    <child link="arm2_link_10"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
     <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
   </joint>
   <link name="arm2_sphere">
@@ -272,33 +733,33 @@
       <origin xyz="0 0 0.01"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="1.3333333333333333e-05" ixy="0.0" ixz="0.0" iyy="1.3333333333333333e-05" iyz="0.0" izz="1.3333333333333333e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="3.636363636363637e-07" ixy="0.0" ixz="0.0" iyy="3.636363636363637e-07" iyz="0.0" izz="3.636363636363637e-07"/>
     </inertial>
   </link>
   <joint name="arm2_fixed_joint_sphere" type="fixed">
-    <parent link="arm2_link_2"/>
+    <parent link="arm2_link_10"/>
     <child link="arm2_sphere"/>
-    <origin rpy="0 0 0" xyz="0 0 0.13999999999999999"/>
+    <origin rpy="0 0 0" xyz="0 0 0.019999999999999997"/>
   </joint>
   <!-- Create the base link -->
   <link name="arm3_base"/>
   <link name="arm3_link_1">
     <visual>
       <geometry>
-        <mesh filename="./meshes/SingleSegment.dae" scale="1.0 1.0 1.0"/>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.15" radius="0.01"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="0.0006333333333333333" ixy="0.0" ixz="0.0" iyy="0.0006333333333333333" iyz="0.0" izz="1.6666666666666667e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
     </inertial>
   </link>
   <joint name="arm3_joint_1" type="revolute">
@@ -312,19 +773,19 @@
   <link name="arm3_link_2">
     <visual>
       <geometry>
-        <mesh filename="./meshes/SingleSegment.dae" scale="1.0 1.0 1.0"/>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.15" radius="0.01"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="0.0006333333333333333" ixy="0.0" ixz="0.0" iyy="0.0006333333333333333" iyz="0.0" izz="1.6666666666666667e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
     </inertial>
   </link>
   <!-- Create the revolute joint -->
@@ -332,7 +793,223 @@
     <parent link="arm3_link_1"/>
     <child link="arm3_link_2"/>
     <axis xyz="1 0 0"/>
-    <origin rpy="0 0 0" xyz="0 0 0.15"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm3_link_3">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm3_joint_3" type="revolute">
+    <parent link="arm3_link_2"/>
+    <child link="arm3_link_3"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm3_link_4">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm3_joint_4" type="revolute">
+    <parent link="arm3_link_3"/>
+    <child link="arm3_link_4"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm3_link_5">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm3_joint_5" type="revolute">
+    <parent link="arm3_link_4"/>
+    <child link="arm3_link_5"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm3_link_6">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm3_joint_6" type="revolute">
+    <parent link="arm3_link_5"/>
+    <child link="arm3_link_6"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm3_link_7">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm3_joint_7" type="revolute">
+    <parent link="arm3_link_6"/>
+    <child link="arm3_link_7"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm3_link_8">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm3_joint_8" type="revolute">
+    <parent link="arm3_link_7"/>
+    <child link="arm3_link_8"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm3_link_9">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm3_joint_9" type="revolute">
+    <parent link="arm3_link_8"/>
+    <child link="arm3_link_9"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm3_link_10">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm3_joint_10" type="revolute">
+    <parent link="arm3_link_9"/>
+    <child link="arm3_link_10"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
     <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
   </joint>
   <link name="arm3_sphere">
@@ -349,33 +1026,33 @@
       <origin xyz="0 0 0.01"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="1.3333333333333333e-05" ixy="0.0" ixz="0.0" iyy="1.3333333333333333e-05" iyz="0.0" izz="1.3333333333333333e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="3.636363636363637e-07" ixy="0.0" ixz="0.0" iyy="3.636363636363637e-07" iyz="0.0" izz="3.636363636363637e-07"/>
     </inertial>
   </link>
   <joint name="arm3_fixed_joint_sphere" type="fixed">
-    <parent link="arm3_link_2"/>
+    <parent link="arm3_link_10"/>
     <child link="arm3_sphere"/>
-    <origin rpy="0 0 0" xyz="0 0 0.13999999999999999"/>
+    <origin rpy="0 0 0" xyz="0 0 0.019999999999999997"/>
   </joint>
   <!-- Create the base link -->
   <link name="arm4_base"/>
   <link name="arm4_link_1">
     <visual>
       <geometry>
-        <mesh filename="./meshes/SingleSegment.dae" scale="1.0 1.0 1.0"/>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.15" radius="0.01"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="0.0006333333333333333" ixy="0.0" ixz="0.0" iyy="0.0006333333333333333" iyz="0.0" izz="1.6666666666666667e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
     </inertial>
   </link>
   <joint name="arm4_joint_1" type="revolute">
@@ -389,19 +1066,19 @@
   <link name="arm4_link_2">
     <visual>
       <geometry>
-        <mesh filename="./meshes/SingleSegment.dae" scale="1.0 1.0 1.0"/>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.15" radius="0.01"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
-      <origin xyz="0 0 0.075"/>
+      <origin xyz="0 0 0.015"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="0.0006333333333333333" ixy="0.0" ixz="0.0" iyy="0.0006333333333333333" iyz="0.0" izz="1.6666666666666667e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
     </inertial>
   </link>
   <!-- Create the revolute joint -->
@@ -409,7 +1086,223 @@
     <parent link="arm4_link_1"/>
     <child link="arm4_link_2"/>
     <axis xyz="1 0 0"/>
-    <origin rpy="0 0 0" xyz="0 0 0.15"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm4_link_3">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm4_joint_3" type="revolute">
+    <parent link="arm4_link_2"/>
+    <child link="arm4_link_3"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm4_link_4">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm4_joint_4" type="revolute">
+    <parent link="arm4_link_3"/>
+    <child link="arm4_link_4"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm4_link_5">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm4_joint_5" type="revolute">
+    <parent link="arm4_link_4"/>
+    <child link="arm4_link_5"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm4_link_6">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm4_joint_6" type="revolute">
+    <parent link="arm4_link_5"/>
+    <child link="arm4_link_6"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm4_link_7">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm4_joint_7" type="revolute">
+    <parent link="arm4_link_6"/>
+    <child link="arm4_link_7"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm4_link_8">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm4_joint_8" type="revolute">
+    <parent link="arm4_link_7"/>
+    <child link="arm4_link_8"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm4_link_9">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm4_joint_9" type="revolute">
+    <parent link="arm4_link_8"/>
+    <child link="arm4_link_9"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
+    <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
+  </joint>
+  <!-- Create the next link -->
+  <link name="arm4_link_10">
+    <visual>
+      <geometry>
+        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.03" radius="0.01"/>
+      </geometry>
+      <origin xyz="0 0 0.015"/>
+    </collision>
+    <inertial>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="9.090909090909091e-07" ixy="0.0" ixz="0.0" iyy="9.090909090909091e-07" iyz="0.0" izz="4.5454545454545457e-07"/>
+    </inertial>
+  </link>
+  <!-- Create the revolute joint -->
+  <joint name="arm4_joint_10" type="revolute">
+    <parent link="arm4_link_9"/>
+    <child link="arm4_link_10"/>
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0.03"/>
     <limit effort="10.0" lower="-1.57" upper="1.57" velocity="1.0"/>
   </joint>
   <link name="arm4_sphere">
@@ -426,42 +1319,29 @@
       <origin xyz="0 0 0.01"/>
     </collision>
     <inertial>
-      <mass value="0.3333333333333333"/>
-      <inertia ixx="1.3333333333333333e-05" ixy="0.0" ixz="0.0" iyy="1.3333333333333333e-05" iyz="0.0" izz="1.3333333333333333e-05"/>
+      <mass value="0.009090909090909092"/>
+      <inertia ixx="3.636363636363637e-07" ixy="0.0" ixz="0.0" iyy="3.636363636363637e-07" iyz="0.0" izz="3.636363636363637e-07"/>
     </inertial>
   </link>
   <joint name="arm4_fixed_joint_sphere" type="fixed">
-    <parent link="arm4_link_2"/>
+    <parent link="arm4_link_10"/>
     <child link="arm4_sphere"/>
-    <origin rpy="0 0 0" xyz="0 0 0.13999999999999999"/>
+    <origin rpy="0 0 0" xyz="0 0 0.019999999999999997"/>
   </joint>
-  <!-- Define dummy links for motion generation -->
-  <link name="world"/>
-  <link name="p1"/>
-  <link name="p2"/>
-  <link name="p3"/>
-  <joint name="x_pos" type="prismatic">
-    <parent link="world"/>
-    <child link="p1"/>
-    <axis xyz="1 0 0"/>
-    <limit effort="100" lower="-1" upper="1" velocity="100"/>
+  <joint name="arm1_joint" type="fixed">
+    <parent link="drone_base"/>
+    <child link="arm1_base"/>
   </joint>
-  <joint name="y_pos" type="prismatic">
-    <parent link="p1"/>
-    <child link="p2"/>
-    <axis xyz="0 1 0"/>
-    <limit effort="100" lower="-1" upper="1" velocity="100"/>
+  <joint name="arm2_joint" type="fixed">
+    <parent link="drone_base"/>
+    <child link="arm2_base"/>
   </joint>
-  <joint name="z_pos" type="prismatic">
-    <parent link="p2"/>
-    <child link="p3"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="100" lower="-1" upper="1" velocity="100"/>
+  <joint name="arm3_joint" type="fixed">
+    <parent link="drone_base"/>
+    <child link="arm3_base"/>
   </joint>
-  <joint name="base_joint" type="continuous">
-    <parent link="p3"/>
-    <child link="drone_base"/>
-    <axis xyz="0 0 1"/>
-    <dynamics damping="100.0" friction="0.0"/>
+  <joint name="arm4_joint" type="fixed">
+    <parent link="drone_base"/>
+    <child link="arm4_base"/>
   </joint>
 </robot>

@@ -124,34 +124,34 @@
             </inertial>
         </link>
 
-        <joint name="${prefix}_prop1joint" type="continous">
+        <joint name="${prefix}_prop1joint" type="fixed">
             <parent link="${prefix}_base" />
             <child link="${prefix}_prop1" />
-            <limit effort="3000" velocity="10000.0"/>
             <origin xyz="${arm_x} ${arm_y} 0.04" rpy="0 0 0" />
-            <axis xyz="0 0 1" />
+            <!--<limit effort="3000" velocity="10000.0"/>
+            <axis xyz="0 0 1" />-->
         </joint>
 
-        <joint name="${prefix}_prop2joint" type="continous">
+        <joint name="${prefix}_prop2joint" type="fixed">
             <parent link="${prefix}_base" />
             <child link="${prefix}_prop2" />
-            <limit effort="3000" velocity="10000.0"/>
             <origin xyz="${-arm_x} ${arm_y} 0.04" rpy="0 0 0" />
-            <axis xyz="0 0 1" />
+            <!--<limit effort="3000" velocity="10000.0"/>
+            <axis xyz="0 0 1" />-->
         </joint>
-        <joint name="${prefix}_prop3joint" type="continous">
+        <joint name="${prefix}_prop3joint" type="fixed">
             <parent link="${prefix}_base" />
             <child link="${prefix}_prop3" />
-            <limit effort="3000" velocity="10000.0"/>
             <origin xyz="${-arm_x} ${-arm_y} 0.04" rpy="0 0 0" />
-            <axis xyz="0 0 1" />
+            <!--<limit effort="3000" velocity="10000.0"/>
+            <axis xyz="0 0 1" />-->
         </joint>
-        <joint name="${prefix}_prop4joint" type="continous">
+        <joint name="${prefix}_prop4joint" type="fixed">
             <parent link="${prefix}_base" />
             <child link="${prefix}_prop4" />
-            <limit effort="3000" velocity="10000.0"/>
             <origin xyz="${arm_x} ${-arm_y} 0.04" rpy="0 0 0" />
-            <axis xyz="0 0 1" />
+            <!--<limit effort="3000" velocity="10000.0"/>
+            <axis xyz="0 0 1" />-->
         </joint>
 
 
