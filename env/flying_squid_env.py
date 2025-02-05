@@ -52,7 +52,8 @@ class FlyingSquidEnv(VecEnv):
         self.HISTORY_LENGTH = history_length
         self.CORRIDOR_WIDTH_RANGE = corridor_width_range
         self.CORRIDOR_ANGLE_RANGE = corridor_angle_range
-        self.CORRIDOR_BOX_SIZE = np.array([0.1, 50, 2])
+        self.CORRIDOR_BOX_SIZE = np.array([0.1, 10, 2])
+        self.FLIGHT_HEIGHT=2.25
 
         if p_ini is None:
             num_per_side = int(np.ceil(np.sqrt(self.num_envs)))  # Number of rows/cols
@@ -137,8 +138,9 @@ class FlyingSquidEnv(VecEnv):
 
         # Get overall mass
         self.M = self.drone.get_mass()
-        init_pos = np.concatenate([self.P_INI, self.YAW_INI, np.zeros([self.num_envs, 10 * 4])], axis=1) 
-
+        init_pos = np.concatenate([np.zeros([self.num_envs, 2]), self.P_INI[:, 2].reshape([self.num_envs, 1]),
+                                   self.YAW_INI, np.zeros([self.num_envs, 10 * 4])], axis=1) 
+        self.drone.set_pos(np.concatenate([self.P_INI[:, :2], np.zeros([self.num_envs, 1])], axis=1))
         self.drone.set_dofs_position(init_pos)
         self.drone.set_dofs_velocity(np.zeros_like(init_pos))
 
@@ -209,7 +211,8 @@ class FlyingSquidEnv(VecEnv):
             self.des_dir[dones, :] = np.array([np.sin(theta), np.cos(theta)]).T
 
             # Reset Drone Positions
-            init_pos = np.concatenate([self.P_INI[dones], self.YAW_INI[dones], np.zeros([num_resets, 10 * 4])], axis=1) 
+            init_pos = np.concatenate([np.zeros([num_resets, 2]), self.P_INI[dones, 2].reshape([num_resets, 1]),
+                                       self.YAW_INI[dones], np.zeros([num_resets, 10 * 4])], axis=1)
             self.drone.set_dofs_position(init_pos, envs_idx=self.envs_idx[dones])
             self.drone.set_dofs_velocity(np.zeros_like(init_pos), envs_idx=self.envs_idx[dones])
             self.step_counts[dones] = np.zeros(num_resets) 
@@ -223,10 +226,10 @@ class FlyingSquidEnv(VecEnv):
         self.actions = actions
 
     def _lin_vel_ctrl(self, v, v_des,kp=10):
-        force = np.array([[0, 0, self.g * self.M] for _ in range(self.num_envs)])
-        force[:, :2] += kp * (v_des[:, :2] - np.array(v[:, :2]))
+        return kp * (v_des[:, :2] - np.array(v[:, :2]))
 
-        return force
+    def _altitude_ctrl(self, h, hdot, h_des, kp=10, kd=5):
+        return kp * (h_des - h) - kd*hdot
 
     def _rot_vel_ctrl(self, omega, omega_des, kp=10):
         torque = kp * (omega_des - np.array(omega))
@@ -248,15 +251,18 @@ class FlyingSquidEnv(VecEnv):
         ).reshape([self.num_envs, 3])  
 
         # Find current state
-        p = self.drone.get_dofs_position()
-        v = self.drone.get_dofs_velocity()
+        p = np.array(self.drone.get_dofs_position())
+        v = np.array(self.drone.get_dofs_velocity())
 
         # Extract the commands from the actions
-        v_des = self.actions[:, 1, np.newaxis] * np.hstack([np.sin(self.actions[:, 0]), np.cos(self.actions[:, 0])]) * self.MAX_LIN_VEL
+        # The angle is in the body frame so we rotate it accordingly
+        angle = np.arctan2(np.sin(self.actions[:, 0] - p[:, 3]), np.cos(self.actions[:, 0] - p[:, 3])) 
+        v_des = (self.actions[:, 1, np.newaxis] * np.vstack([np.sin(angle), np.cos(angle)]) * self.MAX_LIN_VEL).T
         omega_des = self.actions[:, 2] * self.MAX_ROT_VEL
         
         # Apply torque within limits
-        lin_ctrl = self._lin_vel_ctrl(v=v[:, :3], v_des=v_des)
+        lin_ctrl = self._lin_vel_ctrl(v=v[:, :2], v_des=v_des)
+        h_ctrl = self._altitude_ctrl(h=p[:, 2], hdot=v[:, 2], h_des=self.FLIGHT_HEIGHT).reshape([self.num_envs, 1])
         rot_ctrl = self._rot_vel_ctrl(omega=v[:, 3], omega_des=omega_des).reshape([self.num_envs, 1])
         arm_ctrl = self._arm_ctrl(alpha=0.8)
 
@@ -265,7 +271,7 @@ class FlyingSquidEnv(VecEnv):
 
         # Apply the control and stiffness forces
         self.drone.control_dofs_force(
-            np.concatenate([lin_ctrl, rot_ctrl, arm_ctrl + stiffness_contrib.T], axis=1)
+            np.concatenate([lin_ctrl, h_ctrl, rot_ctrl, arm_ctrl + stiffness_contrib.T], axis=1)
         )
         self.scene.step()
 
@@ -274,7 +280,7 @@ class FlyingSquidEnv(VecEnv):
         dones = (max_steps_reached)
 
         # Compute reward
-        distance_traveled = np.dot(self.des_dir.T, p[:, :2])      # Encourage distance traveled along the desired direction
+        distance_traveled = np.sum(self.des_dir * p[:, :2], axis=1)      # Encourage distance traveled along the desired direction
         rewards = (distance_traveled)
 
         # Update Observation hist
@@ -299,9 +305,8 @@ class FlyingSquidEnv(VecEnv):
         return self._get_observation(), rewards, dones, infos
     
     def _get_observation(self):        
-
-        contact_hist = np.concatenate([list(contact) for contact in self.contact_hist], axis=1)
-        att_hist = np.concatenate([list(att) for att in self.att_hist], axis=1)
+        contact_hist = np.array([contact for contact in self.contact_hist])
+        att_hist = np.array([att for att in self.att_hist])
         return { 'des_dir': self.des_dir,
                 'contacts': contact_hist,
                      'att': att_hist}
