@@ -14,13 +14,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 -0.010000000000000002"/>
       <geometry>
-        <box size="0.625 0.625 0.1"/>
+        <box size="0.525 0.525 0.1"/>
       </geometry>
     </collision>
     <inertial>
-      <origin rpy="0 0 0" xyz="0 0 0.3125"/>
+      <origin rpy="0 0 0" xyz="0 0 0.2625"/>
       <mass value="1"/>
-      <inertia ixx="0.03338541666666667" ixy="0.0" ixz="0.0" iyy="0.03338541666666667" iyz="0.0" izz="0.06510416666666666"/>
+      <inertia ixx="0.023802083333333335" ixy="0.0" ixz="0.0" iyy="0.023802083333333335" iyz="0.0" izz="0.0459375"/>
     </inertial>
   </link>
   <link name="drone_prop1">
