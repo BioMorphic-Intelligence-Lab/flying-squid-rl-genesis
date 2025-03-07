@@ -15,7 +15,8 @@ class FlyingSquidEnv(VecEnv):
                  corridor_width_range=[2, 5],
                  corridor_angle_range=np.deg2rad([-45, 45]),
                  p_ini=None,
-                 yaw_ini=None):
+                 yaw_ini=None,
+                 debug=False):
 
         # Init Genesis running on CPU
         if str.lower(device) == 'cpu':
@@ -23,6 +24,9 @@ class FlyingSquidEnv(VecEnv):
         else:
             print("ERROR! Current no other device than CPU supported")
         self.vis = vis
+
+        # Should we draw debug arrows?
+        self.debug = debug
 
         # Action Space: [theta, ||v||, omega] aka
         #    - angle and magnitude of desired linear speed in body frame
@@ -34,7 +38,8 @@ class FlyingSquidEnv(VecEnv):
         observation_space = gym.spaces.Dict({
              'des_dir': gym.spaces.Box(low=-1, high=1, shape=(2,)),
             'contacts': gym.spaces.MultiBinary((history_length, 4)),
-                 'att': gym.spaces.Box(low=-1, high=1, shape=(history_length, 2))
+                 'att': gym.spaces.Box(low=-1, high=1, shape=(history_length, 2)),
+           'prev_cmds': gym.spaces.Box(low=-1, high=1, shape=(history_length, action_space.shape[0]))
         })
 
         # Init the Vector Env
@@ -80,12 +85,14 @@ class FlyingSquidEnv(VecEnv):
         # Init Observation hist
         self.contact_hist = [deque(np.zeros([self.HISTORY_LENGTH, 4])) for _ in range(self.num_envs)]
         self.att_hist = [deque(np.zeros([self.HISTORY_LENGTH, 2])) for _ in range(self.num_envs)]
+        self.action_hist = [deque(np.zeros([self.HISTORY_LENGTH, self.action_space.shape[0]])) for _ in range(self.num_envs)]
+        self.prev_distance = np.zeros(self.num_envs)
 
         self.scene = gs.Scene(
             viewer_options=
             gs.options.ViewerOptions(
-                camera_pos=(-2.0, -20.0, 5),
-                camera_lookat=(3.0, 0.0, 0.5),
+                camera_pos=(-1.0, -15.0, 10),
+                camera_lookat=(0.0, 10.0, 0.5),
                 camera_fov=30,
                 res=(960, 640),
                 max_FPS=60,
@@ -97,8 +104,8 @@ class FlyingSquidEnv(VecEnv):
         # Init Cam 
         self.cam = self.scene.add_camera(
                 res    = (1280, 960),
-                pos    = (-2.0, -20.0, 5),
-                lookat = (3.0, 0.0, 0.5),
+                pos    = (-1.0, -15.0, 10),
+                lookat = (0.0, 10.0, 0.5),
                 fov    = 30,
                 GUI    = False
             )
@@ -106,28 +113,29 @@ class FlyingSquidEnv(VecEnv):
         self.ground_plane = self.scene.add_entity(gs.morphs.Plane())
 
         # Make corridor
-        self.corridor_plane_left = self.scene.add_entity(gs.morphs.Box(size=self.CORRIDOR_BOX_SIZE, fixed=True))
-        self.corridor_plane_right = self.scene.add_entity(gs.morphs.Box(size=self.CORRIDOR_BOX_SIZE, fixed=True))
+        self.corridor_plane_left = self.scene.add_entity(gs.morphs.Box(size=self.CORRIDOR_BOX_SIZE, fixed=True),
+                                                         surface=gs.surfaces.Plastic(color=(0.8, 0.8, 0.8, 0.9)))
+        self.corridor_plane_right = self.scene.add_entity(gs.morphs.Box(size=self.CORRIDOR_BOX_SIZE, fixed=True),
+                                                         surface=gs.surfaces.Plastic(color=(0.8, 0.8, 0.8, 0.9)))
         self.corridor_widths = np.random.uniform(low=self.CORRIDOR_WIDTH_RANGE[0], high=self.CORRIDOR_WIDTH_RANGE[1], size=self.num_envs)
         self.corridor_angles = np.random.uniform(low=self.CORRIDOR_ANGLE_RANGE[0], high=self.CORRIDOR_ANGLE_RANGE[1], size=self.num_envs)
 
         # Init desired direction
-        theta = self.corridor_angles + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=self.num_envs)
+        theta = np.zeros(self.num_envs) #self.corridor_angles + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=self.num_envs)
         self.des_dir = np.array([np.sin(theta), np.cos(theta)]).T
         
         # Init Genesis Scene
-
         self.drone = self.scene.add_entity(
             gs.morphs.URDF(
                 file="./assets/drone_w_arms.urdf",  # Path to your URDF file
                 fixed=True,
-                merge_fixed_links=False
-            )
+                merge_fixed_links=False,
+            ), visualize_contact=self.debug
         )
 
         # Arm parameters
         self.K = 0.5 * np.eye(10 * 4)
-        self.MAX_TENSION = 0.9
+        self.MAX_TENSION = 1.0
         self.RADIUS = 0.2
 
         # Finally build the scene
@@ -159,10 +167,10 @@ class FlyingSquidEnv(VecEnv):
         ], axis=1)  # Shape: (len(env_idx), 3, 3)
 
         # Broadcastable translation components
-        translation = self.P_INI[env_idx, :] * [1, 1, 0] - [0, 0.5, 0]
+        translation = self.P_INI[env_idx, :] * [1, 1, 0]
 
         # Define vectors with correct shape
-        box_offset = np.array([self.CORRIDOR_BOX_SIZE[0], self.CORRIDOR_BOX_SIZE[1], self.CORRIDOR_BOX_SIZE[2]])
+        box_offset = np.array([self.CORRIDOR_BOX_SIZE[0], self.CORRIDOR_BOX_SIZE[1], self.CORRIDOR_BOX_SIZE[2]]) - [0.0, 2.0, 0]
         vec1 = np.stack([-width - box_offset[0], ones_a[:, 0] * box_offset[1], ones_a[:, 0] * box_offset[2]], axis=1)
         vec2 = np.stack([ width + box_offset[0], ones_a[:, 0] * box_offset[1], ones_a[:, 0] * box_offset[2]], axis=1)
 
@@ -200,6 +208,7 @@ class FlyingSquidEnv(VecEnv):
                 if dones[i]:
                     self.contact_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 4]))
                     self.att_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 2]))
+                    self.action_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, self.action_space.shape[0]]))
 
             # Make corridor
             self.corridor_widths[dones] = np.random.uniform(low=self.CORRIDOR_WIDTH_RANGE[0], high=self.CORRIDOR_WIDTH_RANGE[1], size=num_resets)
@@ -212,7 +221,7 @@ class FlyingSquidEnv(VecEnv):
 
             # Reset Drone Positions
             init_pos = np.concatenate([np.zeros([num_resets, 2]), self.P_INI[dones, 2].reshape([num_resets, 1]),
-                                       self.YAW_INI[dones], np.zeros([num_resets, 10 * 4])], axis=1)
+                                       self.YAW_INI[dones], 0.2 * np.ones([num_resets, 10 * 4])], axis=1)
             self.drone.set_dofs_position(init_pos, envs_idx=self.envs_idx[dones])
             self.drone.set_dofs_velocity(np.zeros_like(init_pos), envs_idx=self.envs_idx[dones])
             self.step_counts[dones] = np.zeros(num_resets) 
@@ -244,21 +253,52 @@ class FlyingSquidEnv(VecEnv):
 
         self.step_counts += 1
 
-        self.actions = np.clip(
-            self.actions * [np.pi, self.MAX_LIN_VEL, self.MAX_ROT_VEL],
-            a_min=[-np.pi, 0, -self.MAX_ROT_VEL],
-            a_max=[np.pi, self.MAX_LIN_VEL, self.MAX_ROT_VEL]
-        ).reshape([self.num_envs, 3])  
-
         # Find current state
         p = np.array(self.drone.get_dofs_position())
         v = np.array(self.drone.get_dofs_velocity())
 
+        # Update Observation hist
+        contacts = 1.0 * (np.linalg.norm(self.drone.get_links_net_contact_force()[:, -4:, :], axis=2) > 0)
+        for n in range(self.num_envs):
+            self.contact_hist[n].popleft()
+            self.contact_hist[n].append(contacts[n, :])
+            self.att_hist[n].popleft()
+            self.att_hist[n].append(np.array([np.sin(p[n, 3]), np.cos(p[n, 3])]))
+            self.action_hist[n].popleft()
+            self.action_hist[n].append(self.actions[n, :])
+
+        # Translate velocity command action from [-1, 1] to [0, 1]
+        self.actions[:, 1] = 0.5 * self.actions[:, 1] + 0.5
+
+        # Clip actions
+        self.actions = np.clip(
+            self.actions * [np.pi, 1.0, self.MAX_ROT_VEL],
+            a_min=[-np.pi, 0, -self.MAX_ROT_VEL],
+            a_max=[np.pi, 1.0, self.MAX_ROT_VEL]
+        ).reshape([self.num_envs, 3])  
+
         # Extract the commands from the actions
         # The angle is in the body frame so we rotate it accordingly
-        angle = np.arctan2(np.sin(self.actions[:, 0] - p[:, 3]), np.cos(self.actions[:, 0] - p[:, 3])) 
-        v_des = (self.actions[:, 1, np.newaxis] * np.vstack([np.sin(angle), np.cos(angle)]).T * self.MAX_LIN_VEL)
-        omega_des = self.actions[:, 2] * self.MAX_ROT_VEL
+        des_angle = np.arctan2(self.des_dir[:, 0], self.des_dir[:, 1])
+        angle = np.arctan2(np.sin((des_angle + p[:, 3]) + (self.actions[:, 0] - p[:, 3])),
+                           np.cos((des_angle + p[:, 3]) + (self.actions[:, 0] - p[:, 3]))) 
+        v_des = (1 - self.actions[:, 1, np.newaxis]) * self.MAX_LIN_VEL * np.vstack([np.sin(angle), np.cos(angle)]).T
+        omega_des = self.actions[:, 2]
+
+        # Draw command arrows
+        if self.debug:  
+            self.scene.clear_debug_objects()      
+            # Commanded Direction
+            self.scene.draw_debug_arrow(p[:, :3], np.concatenate([v_des, np.zeros([self.num_envs, 1])], axis=1),
+                                        radius=0.01, color=(1, 0, 0, 0.5))
+            # Commanded Angular Velocity
+            self.scene.draw_debug_arrow(p[:, :3],
+                                        np.concatenate([np.zeros([self.num_envs, 2]),
+                                                                  omega_des[:, np.newaxis]], axis=1),
+                                        radius=0.01, color=(1, 1, 0, 0.5))
+            # Desired Direction
+            self.scene.draw_debug_arrow(p[:, :3], np.concatenate([self.des_dir, np.zeros([self.num_envs, 1])], axis=1),
+                                        radius=0.01, color=(0, 0, 1, 0.5))
         
         # Apply torque within limits
         lin_ctrl = self._lin_vel_ctrl(v=v[:, :2], v_des=v_des)
@@ -280,16 +320,16 @@ class FlyingSquidEnv(VecEnv):
         dones = (max_steps_reached)
 
         # Compute reward
-        distance_traveled = np.sum(self.des_dir * p[:, :2], axis=1)      # Encourage distance traveled along the desired direction
-        rewards = (distance_traveled)
-
-        # Update Observation hist
-        contacts = 1.0 * (np.linalg.norm(self.drone.get_links_net_contact_force()[:, -4:, :], axis=2) > 0)
-        for n in range(self.num_envs):
-            self.contact_hist[n].popleft()
-            self.contact_hist[n].append(contacts[n, :])
-            self.att_hist[n].popleft()
-            self.att_hist[n].append(np.array([np.sin(p[n, 3]), np.cos(p[n, 3])]))
+        distance = np.sum(self.des_dir * p[:, :2], axis=1)
+        distance_traveled = (distance                                          # Encourage distance traveled along
+                              - self.prev_distance)                            # the desired direction
+        self.prev_distance = distance
+        actuation_cost = (- 1e3 * self.actions[:, 0]**2                        # Penalize deviation from target direction
+                          - 1e4 * self.actions[:, 1]**2                        # Penalize deviation from max vel
+                          - 1e3 * self.actions[:, 2]**2)                       # Penalize rotational velocity
+        actuation_variation_cost = - (np.dot(np.std(self.action_hist, axis=1),  # Penalize variation of actuation, i.e weighte sum of 
+                                             1e3 * np.array([1, 1, 1])))              # std over the history of actions
+        rewards = (distance_traveled + actuation_cost + actuation_variation_cost)
         
         # Write info dicts
         infos = [{} for _ in range(self.num_envs)]
@@ -307,9 +347,11 @@ class FlyingSquidEnv(VecEnv):
     def _get_observation(self):        
         contact_hist = np.array([contact for contact in self.contact_hist])
         att_hist = np.array([att for att in self.att_hist])
+        action_hist = np.array([action for action in self.action_hist])
         return { 'des_dir': self.des_dir,
                 'contacts': contact_hist,
-                     'att': att_hist}
+                     'att': att_hist,
+               'prev_cmds': action_hist}
     
     def close(self):
         pass
