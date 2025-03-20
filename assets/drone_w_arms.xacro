@@ -2,8 +2,8 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="drone_w_arms">
 
 
-    <xacro:property name="min_ax" value="-100"/>
-    <xacro:property name="max_ax" value="100"/>
+    <xacro:property name="min_ax" value="-1000"/>
+    <xacro:property name="max_ax" value="1000"/>
 
     <!-- Include the robot macro -->
     <xacro:include filename="drone.xacro"/>
@@ -21,21 +21,21 @@
         <parent link="world" />
         <child link="p1" />
         <axis xyz="1 0 0"/>
-        <limit lower="${min_ax}" upper="${max_ax}" effort="100" velocity="100"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="1000" velocity="1000"/>
     </joint>
 
     <joint name="y_pos" type="prismatic">
         <parent link="p1" />
         <child link="p2" />
         <axis xyz="0 1 0"/>
-        <limit lower="${min_ax}" upper="${max_ax}" effort="100" velocity="100"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="1000" velocity="1000"/>
     </joint>
 
     <joint name="z_pos" type="prismatic">
         <parent link="p2" />
         <child link="p3" />
         <axis xyz="0 0 1"/>
-        <limit lower="${min_ax}" upper="${max_ax}" effort="100" velocity="100"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="1000" velocity="1000"/>
     </joint>
 
     <joint name="base_joint" type="continuous">
@@ -46,10 +46,10 @@
     </joint>
 
     <!-- Add dummy arms -->
-    <xacro:flex_arm prefix="arm1" L="0.3" n="10" m="0.1" xyz=" 0.175  0.175 0" rpy="3.141 0 -0.7854"/>
-    <xacro:flex_arm prefix="arm2" L="0.3" n="10" m="0.1" xyz=" 0.175 -0.175 0" rpy="3.141 0 -2.3562"/>
-    <xacro:flex_arm prefix="arm3" L="0.3" n="10" m="0.1" xyz="-0.175 -0.175 0" rpy="3.141 0 2.3562"/>
-    <xacro:flex_arm prefix="arm4" L="0.3" n="10" m="0.1" xyz="-0.175  0.175 0" rpy="3.141 0 0.7854"/>
+    <xacro:flex_arm prefix="arm1" L="0.3" n="10" m="1.0" xyz=" 0.175  0.175 0" rpy="3.141 0 -0.7854"/>
+    <xacro:flex_arm prefix="arm2" L="0.3" n="10" m="1.0" xyz=" 0.175 -0.175 0" rpy="3.141 0 -2.3562"/>
+    <xacro:flex_arm prefix="arm3" L="0.3" n="10" m="1.0" xyz="-0.175 -0.175 0" rpy="3.141 0 2.3562"/>
+    <xacro:flex_arm prefix="arm4" L="0.3" n="10" m="1.0" xyz="-0.175  0.175 0" rpy="3.141 0 0.7854"/>
 
     <joint name="arm1_joint" type="fixed">
         <parent link="drone_base"/>

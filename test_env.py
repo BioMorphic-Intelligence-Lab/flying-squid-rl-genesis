@@ -31,12 +31,12 @@ def main():
         env.cam.start_recording()
 
     for t in range(n_steps):
-
         for j in range(env.num_envs):
-            #a[j, :] = [0.0, # theta / np.pi
-            #           0.0, # ||v|| / MAX_SPEED
+            obs_j = {key: value[j] for key, value in obs.items()}
+            #a[j, :] = [0.0, # \delta theta / np.pi
+            #           0.0, # \delta||v|| / MAX_SPEED
             #           0.0] # omega / MAX_RATE
-            a[j, :], _ = model.predict(obs)
+            a[j, :], _ = model.predict(obs_j)
             
         obs, rewards, dones, infos = env.step(a)
 
