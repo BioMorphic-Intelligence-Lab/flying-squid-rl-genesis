@@ -21,7 +21,7 @@ def main():
     model = PPO.load("models/PPO/5000000.0")
 
     n_steps = int(args.T/args.dt)
-    env = FlyingSquidEnv(num_envs=args.n_envs, vis=args.vis, max_steps=n_steps,
+    env = FlyingSquidEnv(num_envs=args.n_envs, vis=args.vis, max_steps=int(n_steps/3),
                         dt=args.dt, history_length=100, debug=args.debug)
     obs = env.reset()
 

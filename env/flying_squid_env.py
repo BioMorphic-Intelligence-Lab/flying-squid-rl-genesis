@@ -23,6 +23,8 @@ class FlyingSquidEnv(VecEnv):
             gs.init(backend=gs.cpu, precision="32", logging_level='warning')
         else:
             print("ERROR! Current no other device than CPU supported")
+
+        # Should we visualize the simulation?
         self.vis = vis
 
         # Should we draw debug arrows?
@@ -58,6 +60,8 @@ class FlyingSquidEnv(VecEnv):
         self.CORRIDOR_WIDTH_RANGE = corridor_width_range
         self.CORRIDOR_ANGLE_RANGE = corridor_angle_range
         self.CORRIDOR_BOX_SIZE = np.array([0.1, 50, 2])
+        self.MAX_OBSTACLE_DENSITY = 0.1
+        self.OBSTACTLE_SIZE_RANGE = np.arange(start=0.2, stop=0.7, step=0.2)
         self.FLIGHT_HEIGHT=1.25
 
         if p_ini is None:
@@ -68,7 +72,7 @@ class FlyingSquidEnv(VecEnv):
             grid_positions = np.stack([x_idx.ravel(), y_idx.ravel()], axis=1)[:self.num_envs]
             
             # Center the grid at the origin
-            grid_positions = (grid_positions - np.mean(grid_positions, axis=0)) * 2 * max(self.CORRIDOR_BOX_SIZE)
+            grid_positions = grid_positions * 2 * max(self.CORRIDOR_BOX_SIZE)
             self.P_INI = np.column_stack([grid_positions, np.zeros(self.num_envs)])  # Add Z coordinate
         else:
             self.P_INI = p_ini
@@ -120,6 +124,17 @@ class FlyingSquidEnv(VecEnv):
         self.corridor_widths = np.random.uniform(low=self.CORRIDOR_WIDTH_RANGE[0], high=self.CORRIDOR_WIDTH_RANGE[1], size=self.num_envs)
         self.corridor_angles = np.random.uniform(low=self.CORRIDOR_ANGLE_RANGE[0], high=self.CORRIDOR_ANGLE_RANGE[1], size=self.num_envs)
 
+        # Init obstacle arrays
+        self.obstacles = [
+            [self.scene.add_entity(
+                gs.morphs.Cylinder(pos=(0, -5, 0.5 * self.CORRIDOR_BOX_SIZE[2]), euler=(0, 0, 0),
+                                    radius=radius, height=self.CORRIDOR_BOX_SIZE[2],
+                                    fixed=True)) 
+                for _ in range(int(self.MAX_OBSTACLE_DENSITY * self.CORRIDOR_WIDTH_RANGE[1] * self.CORRIDOR_BOX_SIZE[1]))]
+            for radius in self.OBSTACTLE_SIZE_RANGE
+        ] 
+        self.obstacle_counters = np.zeros(len(self.OBSTACTLE_SIZE_RANGE))
+
         # Init desired direction
         theta = np.zeros(self.num_envs) #self.corridor_angles + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=self.num_envs)
         self.des_dir = np.array([np.sin(theta), np.cos(theta)]).T
@@ -141,9 +156,6 @@ class FlyingSquidEnv(VecEnv):
         # Finally build the scene
         self.scene.build(n_envs=self.num_envs)
 
-        # Set the corridor positions
-        self._generate_corridor(width=self.corridor_widths, angle=self.corridor_angles, env_idx=self.envs_idx)
-
         # Get overall mass
         self.M = self.drone.get_mass()
         init_pos = np.concatenate([np.zeros([self.num_envs, 2]), self.FLIGHT_HEIGHT * np.ones([self.num_envs, 1]),
@@ -151,6 +163,46 @@ class FlyingSquidEnv(VecEnv):
         self.drone.set_pos(np.concatenate([self.P_INI[:, :2], np.zeros([self.num_envs, 1])], axis=1))
         self.drone.set_dofs_position(init_pos)
         self.drone.set_dofs_velocity(np.zeros_like(init_pos))
+
+    def _generate_obstacles(self, density, size_range, env_idx):
+
+        # Set all obstacle positons back to the original place
+        for radius in self.obstacles:
+            for obstacle in radius:
+                pos = np.array([[0, -5, 0.5 * self.CORRIDOR_BOX_SIZE[2]] for _ in range(len(env_idx))])
+                obstacle.set_pos(pos, envs_idx=env_idx)
+
+        # Find number of obstacles
+        num_obstacles = (density * self.corridor_widths[env_idx] * self.CORRIDOR_BOX_SIZE[1]).astype(int)
+
+        # Init pos vector
+        pos = np.zeros([len(env_idx), 3])
+
+        # Loop over environments
+        for idx, n in enumerate(num_obstacles):
+            # Loop over number of obstaces
+            for i in range(n):
+                # Randomly select radius
+                radius_idx = np.random.choice(range(*size_range))
+                # Define rotation matrix z-axis
+                cT = np.cos(self.corridor_angles[env_idx[idx]])
+                sT = np.sin(self.corridor_angles[env_idx[idx]])
+                rot = np.array([[cT, -sT, 0],
+                                [sT, cT, 0],
+                                [0, 0, 1
+                ]])
+                # Get random location inside coridor
+                pos = (self.P_INI[env_idx[idx], :]
+                        + rot @ np.random.uniform(
+                            low= [-0.5 * self.corridor_widths[env_idx[idx]] + self.OBSTACTLE_SIZE_RANGE[radius_idx], 0, 0],
+                            high=[ 0.5 * self.corridor_widths[env_idx[idx]] - self.OBSTACTLE_SIZE_RANGE[radius_idx], self.CORRIDOR_BOX_SIZE[1], 0],
+                            size=3)
+                )
+                # Set height
+                pos[2] = 0.5 * self.CORRIDOR_BOX_SIZE[2]
+
+                # Set position of obstacle
+                self.obstacles[radius_idx][i].set_pos([pos], envs_idx=[env_idx[idx]])
 
     def _generate_corridor(self, width, angle, env_idx):
         # Ensure `angle` is a column vector of shape (len(env_idx), 1) for broadcasting
@@ -215,12 +267,15 @@ class FlyingSquidEnv(VecEnv):
             self.corridor_angles[dones] = np.random.uniform(low=self.CORRIDOR_ANGLE_RANGE[0], high=self.CORRIDOR_ANGLE_RANGE[1], size=num_resets)
             self._generate_corridor(width=self.corridor_widths, angle=self.corridor_angles, env_idx=self.envs_idx[dones])
 
+            # Generate obstacles
+            self._generate_obstacles(density=0.1, size_range=[0, 2], env_idx=self.envs_idx[dones])
+
             # Init desired direction
             theta = -self.corridor_angles[dones] + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=num_resets)
             self.des_dir[dones, :] = np.array([np.sin(theta), np.cos(theta)]).T
 
             # Reset Drone Positions
-            init_pos = np.concatenate([np.zeros([num_resets, 2]), self.P_INI[dones, 2].reshape([num_resets, 1]),
+            init_pos = np.concatenate([np.zeros([num_resets, 2]), self.FLIGHT_HEIGHT * np.ones([num_resets, 1]),
                                        self.YAW_INI[dones], 0.2 * np.ones([num_resets, 10 * 4])], axis=1)
             self.drone.set_dofs_position(init_pos, envs_idx=self.envs_idx[dones])
             self.drone.set_dofs_velocity(np.zeros_like(init_pos), envs_idx=self.envs_idx[dones])
