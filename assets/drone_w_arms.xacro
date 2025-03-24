@@ -4,6 +4,9 @@
 
     <xacro:property name="min_ax" value="-1000"/>
     <xacro:property name="max_ax" value="1000"/>
+    <xacro:property name="max_effort" value="10000"/>
+    <xacro:property name="max_velocity" value="10000"/>
+    
 
     <!-- Include the robot macro -->
     <xacro:include filename="drone.xacro"/>
@@ -21,21 +24,21 @@
         <parent link="world" />
         <child link="p1" />
         <axis xyz="1 0 0"/>
-        <limit lower="${min_ax}" upper="${max_ax}" effort="1000" velocity="1000"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="${max_effort}" velocity="${max_velocity}"/>
     </joint>
 
     <joint name="y_pos" type="prismatic">
         <parent link="p1" />
         <child link="p2" />
         <axis xyz="0 1 0"/>
-        <limit lower="${min_ax}" upper="${max_ax}" effort="1000" velocity="1000"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="${max_effort}" velocity="${max_velocity}"/>
     </joint>
 
     <joint name="z_pos" type="prismatic">
         <parent link="p2" />
         <child link="p3" />
         <axis xyz="0 0 1"/>
-        <limit lower="${min_ax}" upper="${max_ax}" effort="1000" velocity="1000"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="${max_effort}" velocity="${max_velocity}"/>
     </joint>
 
     <joint name="base_joint" type="continuous">

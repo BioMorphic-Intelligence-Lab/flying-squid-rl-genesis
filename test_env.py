@@ -2,6 +2,7 @@ import argparse
 
 import numpy as np
 import genesis as gs
+from baseline import Baseline
 from stable_baselines3 import PPO
 from env import FlyingSquidEnv
 
@@ -19,6 +20,7 @@ def main():
     args = read_po()
 
     model = PPO.load("models/PPO/5000000.0")
+    baseline = Baseline()
 
     n_steps = int(args.T/args.dt)
     env = FlyingSquidEnv(num_envs=args.n_envs, vis=args.vis, max_steps=int(n_steps/3),
@@ -33,10 +35,11 @@ def main():
     for t in range(n_steps):
         for j in range(env.num_envs):
             obs_j = {key: value[j] for key, value in obs.items()}
+            a[j, :] = baseline.act(obs_j)
             #a[j, :] = [0.0, # \delta theta / np.pi
             #           0.0, # \delta||v|| / MAX_SPEED
             #           0.0] # omega / MAX_RATE
-            a[j, :], _ = model.predict(obs_j)
+            #a[j, :], _ = model.predict(obs_j)
             
         obs, rewards, dones, infos = env.step(a)
 

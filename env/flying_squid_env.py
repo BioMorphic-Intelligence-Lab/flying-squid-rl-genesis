@@ -61,7 +61,7 @@ class FlyingSquidEnv(VecEnv):
         self.CORRIDOR_ANGLE_RANGE = corridor_angle_range
         self.CORRIDOR_BOX_SIZE = np.array([0.1, 50, 2])
         self.MAX_OBSTACLE_DENSITY = 0.1
-        self.OBSTACTLE_SIZE_RANGE = np.arange(start=0.2, stop=0.7, step=0.2)
+        self.OBSTACTLE_SIZE_RANGE = np.arange(start=0.3, stop=0.7, step=0.2)
         self.FLIGHT_HEIGHT=1.25
 
         if p_ini is None:
@@ -164,7 +164,7 @@ class FlyingSquidEnv(VecEnv):
         self.drone.set_dofs_position(init_pos)
         self.drone.set_dofs_velocity(np.zeros_like(init_pos))
 
-    def _generate_obstacles(self, density, size_range, env_idx):
+    def _generate_obstacles(self, density, size_range, env_idx, offset=1.0):
 
         # Set all obstacle positons back to the original place
         for radius in self.obstacles:
@@ -173,7 +173,7 @@ class FlyingSquidEnv(VecEnv):
                 obstacle.set_pos(pos, envs_idx=env_idx)
 
         # Find number of obstacles
-        num_obstacles = (density * self.corridor_widths[env_idx] * self.CORRIDOR_BOX_SIZE[1]).astype(int)
+        num_obstacles = (density * self.corridor_widths[env_idx] * (self.CORRIDOR_BOX_SIZE[1] - offset)).astype(int)
 
         # Init pos vector
         pos = np.zeros([len(env_idx), 3])
@@ -194,7 +194,7 @@ class FlyingSquidEnv(VecEnv):
                 # Get random location inside coridor
                 pos = (self.P_INI[env_idx[idx], :]
                         + rot @ np.random.uniform(
-                            low= [-0.5 * self.corridor_widths[env_idx[idx]] + self.OBSTACTLE_SIZE_RANGE[radius_idx], 0, 0],
+                            low= [-0.5 * self.corridor_widths[env_idx[idx]] + self.OBSTACTLE_SIZE_RANGE[radius_idx], offset, 0],
                             high=[ 0.5 * self.corridor_widths[env_idx[idx]] - self.OBSTACTLE_SIZE_RANGE[radius_idx], self.CORRIDOR_BOX_SIZE[1], 0],
                             size=3)
                 )
@@ -202,7 +202,7 @@ class FlyingSquidEnv(VecEnv):
                 pos[2] = 0.5 * self.CORRIDOR_BOX_SIZE[2]
 
                 # Set position of obstacle
-                self.obstacles[radius_idx][i].set_pos([pos], envs_idx=[env_idx[idx]])
+                self.obstacles[radius_idx][i].set_pos(pos[np.newaxis, :], envs_idx=[env_idx[idx]])
 
     def _generate_corridor(self, width, angle, env_idx):
         # Ensure `angle` is a column vector of shape (len(env_idx), 1) for broadcasting
@@ -268,7 +268,7 @@ class FlyingSquidEnv(VecEnv):
             self._generate_corridor(width=self.corridor_widths, angle=self.corridor_angles, env_idx=self.envs_idx[dones])
 
             # Generate obstacles
-            self._generate_obstacles(density=0.1, size_range=[0, 2], env_idx=self.envs_idx[dones])
+            self._generate_obstacles(density=0.05, size_range=[0, 2], env_idx=self.envs_idx[dones])
 
             # Init desired direction
             theta = -self.corridor_angles[dones] + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=num_resets)
@@ -289,7 +289,7 @@ class FlyingSquidEnv(VecEnv):
     def step_async(self, actions):
         self.actions = actions
 
-    def _lin_vel_ctrl(self, v, v_des,kp=10):
+    def _lin_vel_ctrl(self, v, v_des,kp=100):
         return kp * (v_des[:, :2] - np.array(v[:, :2]))
 
     def _altitude_ctrl(self, h, hdot, h_des, kp=100, kd=75):
@@ -326,6 +326,7 @@ class FlyingSquidEnv(VecEnv):
         # Update Observation hist
         contacts = np.zeros([self.num_envs, 4])
         contacts[~n_env_broken, :] = 1.0 * (np.linalg.norm(self.drone.get_links_net_contact_force()[~n_env_broken, -4:, :], axis=2) > 0)
+
         for n in range(self.num_envs):
             self.contact_hist[n].popleft()
             self.contact_hist[n].append(contacts[n, :])

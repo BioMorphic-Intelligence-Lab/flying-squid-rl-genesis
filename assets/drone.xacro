@@ -10,7 +10,7 @@
     <xacro:property name="arm_x" value="0.175"/>
     <xacro:property name="arm_y" value="0.175"/>
 
-    <xacro:property name="m" value="10.0" />
+    <xacro:property name="m" value="2.0" />
 
     <xacro:macro name="box_inertia" params="l1 l2 l3 mass">
         <inertia ixx="${1/12*mass*(l3*l3 + l1*l1)}" ixy="0.0" ixz="0.0" 
