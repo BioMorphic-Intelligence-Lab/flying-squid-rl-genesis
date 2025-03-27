@@ -2,7 +2,7 @@ import argparse
 
 import numpy as np
 import genesis as gs
-from baseline import Baseline
+from baseline.baseline import Baseline
 from stable_baselines3 import PPO
 from env import FlyingSquidEnv
 
@@ -19,7 +19,7 @@ def read_po():
 def main():
     args = read_po()
 
-    model = PPO.load("models/PPO/5000000.0")
+    #model = PPO.load("models/PPO/5000000.0")
     baseline = Baseline()
 
     n_steps = int(args.T/args.dt)
@@ -43,11 +43,18 @@ def main():
             
         obs, rewards, dones, infos = env.step(a)
 
-        if args.record:
+        if np.isnan(env.drone.get_dofs_position()[:3]).any():
+            print("NaN detected in position. Exiting.")
+            break
+
+        if args.record and t % int(1.0 / (24.0 * args.dt)) == 0:
+            squid_pos = np.array(env.drone.get_dofs_position())[0, :3]
+            env.cam.set_pose(pos=squid_pos + np.array([-0, -10, 10]),
+                             lookat=squid_pos)
             env.cam.render()
 
     if args.record:
-        env.cam.stop_recording(save_to_filename='video.mp4', fps=60)
+        env.cam.stop_recording(save_to_filename='video.mp4', fps=24)
 
 if __name__ == "__main__":
     main()

@@ -7,17 +7,11 @@ FRONT_LEFT = 3
 
 class Baseline:
 
-    def __init__(self) -> None:
-        self.FPS = 25
-        self.attitude = 0
-
-    def reset(self):
-        self.attitude = 0
 
     def act(self, obs):
-        # Rescale normalized angular velocity and integrate numerically to get current 
-        # attitude back. Then use that to rotate desired direction into the body frame
-        self.attitude = np.arctan2(obs["att"][-1][1], obs["att"][-1][0])
+        
+        # Get Attitude as Angle
+        attitude = np.arctan2(obs["att"][-1][1], obs["att"][-1][0])
         angle = 0.0
 
         contacts = np.any(obs["contacts"], axis=0).flatten()
