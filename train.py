@@ -19,7 +19,7 @@ def main(argv):
     
     env = VecMonitor(
         FlyingSquidEnv(num_envs=50, max_steps=3000,
-                       dt=0.02, history_length=100)
+                       dt=0.01, history_length=100)
     )
 
     if "-c" in argv:
