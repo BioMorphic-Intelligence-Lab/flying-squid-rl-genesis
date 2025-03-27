@@ -3,8 +3,8 @@
 
     <xacro:property name="pi2" value="${pi * 0.5}" />
 
-    <xacro:property name="l1" value="0.525" />
-    <xacro:property name="l2" value="0.525" />
+    <xacro:property name="l1" value="0.45" />
+    <xacro:property name="l2" value="0.45" />
     <xacro:property name="l3" value="0.1" />
 
     <xacro:property name="arm_x" value="0.175"/>
@@ -22,15 +22,15 @@
     <xacro:macro name="drone_base" params="prefix">        
         <link name="${prefix}_base">
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <origin xyz="0 0 0" rpy="${pi2} 0 0"/>
                 <geometry>
-                    <mesh filename="./meshes/Holybro-X500-V2-no-landinggear-arm-attachments.dae"/>
+                    <mesh filename="./meshes/Holybro-X500-V2-no-landinggear.dae" scale="0.001 0.001 0.001"/>
                 </geometry>
             </visual>
             <collision>
                 <origin xyz="0 0 ${-l3*0.1}" rpy="0 0 0"/>
                 <geometry>
-                    <box size="${l1} ${l2} ${l3}"/>
+                    <cylinder radius="${sqrt(l1*l1 + l2*l2)/2}" length="${l3}"/>
                 </geometry>
             </collision>
             <inertial>
@@ -42,7 +42,7 @@
 
         <link name="${prefix}_prop1">
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <origin xyz="0 0 0.02" rpy="0 0 0"/>
                 <geometry>
                     <mesh filename="./meshes/1345_prop_ccw.dae" scale="0.75 0.75 0.75"/>
                 </geometry>
@@ -63,7 +63,7 @@
 
         <link name="${prefix}_prop2">
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <origin xyz="0 0 0.02" rpy="0 0 0"/>
                 <geometry>
                     <mesh filename="./meshes/1345_prop_cw.dae" scale="0.75 0.75 0.75"/>
                 </geometry>
@@ -84,7 +84,7 @@
 
         <link name="${prefix}_prop3">
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <origin xyz="0 0 0.02" rpy="0 0 0"/>
                 <geometry>
                     <mesh filename="./meshes/1345_prop_ccw.dae" scale="0.75 0.75 0.75"/>
                 </geometry>
@@ -105,7 +105,7 @@
 
         <link name="${prefix}_prop4">
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <origin xyz="0 0 0.02" rpy="0 0 0"/>
                 <geometry>
                     <mesh filename="./meshes/1345_prop_cw.dae" scale="0.75 0.75 0.75"/>
                 </geometry>
