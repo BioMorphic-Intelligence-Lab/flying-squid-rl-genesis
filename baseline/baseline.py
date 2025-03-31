@@ -11,8 +11,12 @@ class Baseline:
     def act(self, obs):
         
         # Get Attitude as Angle
-        attitude = np.arctan2(obs["att"][-1][1], obs["att"][-1][0])
-        angle = 0.0
+        attitude = np.arctan2(obs["att"][-1][0], obs["att"][-1][1])
+        angle = np.arctan2(obs["des_dir"][0], obs["des_dir"][1]) + attitude
+
+        print(attitude)
+        print(angle)
+        print("#########")
 
         contacts = np.any(obs["contacts"], axis=0).flatten()
         contacts_sum = sum(contacts)
@@ -104,4 +108,4 @@ class Baseline:
                 elif goal_dir_quadrant == 4:
                     angle = angle
         
-        return np.array([(angle) / np.pi, 0, 0])
+        return np.array([(angle) / np.pi, 1.0, 0.0])

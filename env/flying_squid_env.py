@@ -20,15 +20,18 @@ class FlyingSquidEnv(VecEnv):
 
         # Init Genesis running on CPU
         if str.lower(device) == 'cpu':
-            gs.init(backend=gs.cpu, precision="32", logging_level='warning')
+            gs.init(backend=gs.cpu, precision="32", logging_level='error')
         else:
-            print("ERROR! Current no other device than CPU supported")
+            print("ERROR! Currently no other device than CPU supported")
 
         # Should we visualize the simulation?
         self.vis = vis
 
         # Should we draw debug arrows?
         self.debug = debug
+
+        # Timestep
+        self.dt = dt
 
         # Action Space: [theta, ||v||, omega] aka
         #    - angle and magnitude of desired linear speed in body frame
@@ -59,10 +62,14 @@ class FlyingSquidEnv(VecEnv):
         self.HISTORY_LENGTH = history_length
         self.CORRIDOR_WIDTH_RANGE = corridor_width_range
         self.CORRIDOR_ANGLE_RANGE = corridor_angle_range
-        self.CORRIDOR_BOX_SIZE = np.array([0.1, 50, 2])
+        self.CORRIDOR_BOX_SIZE = np.array([0.5, 50, 2])
         self.MAX_OBSTACLE_DENSITY = 0.1
-        self.OBSTACTLE_SIZE_RANGE = np.arange(start=0.3, stop=0.7, step=0.2)
+        self.OBSTACTLE_SIZE_RANGE = np.arange(start=0.3, stop=0.8, step=0.2)
         self.FLIGHT_HEIGHT=1.25
+
+        # Init error integral for lin vel control
+        self._integral_vel_error = np.zeros([self.num_envs, 2])
+        self._integral_omega_error = np.zeros([self.num_envs, 1])
 
         if p_ini is None:
             num_per_side = int(np.ceil(np.sqrt(self.num_envs)))  # Number of rows/cols
@@ -84,7 +91,7 @@ class FlyingSquidEnv(VecEnv):
         self.g = g
 
         # Init step counter to terminate envs
-        self.step_counts = np.zeros(self.num_envs)
+        self.step_counts = np.zeros(self.num_envs, dtype=int)
 
         # Init Observation hist
         self.contact_hist = [deque(np.zeros([self.HISTORY_LENGTH, 4])) for _ in range(self.num_envs)]
@@ -92,6 +99,10 @@ class FlyingSquidEnv(VecEnv):
         self.action_hist = [deque(np.zeros([self.HISTORY_LENGTH, self.action_space.shape[0]])) for _ in range(self.num_envs)]
         self.prev_distance = np.zeros(self.num_envs)
 
+        # Set Contact Dynamics options
+        gs.options.RigidOptions(contact_resolve_time=0.001, iterations=5000)
+
+        # Define the scene
         self.scene = gs.Scene(
             viewer_options=
             gs.options.ViewerOptions(
@@ -117,9 +128,13 @@ class FlyingSquidEnv(VecEnv):
         self.ground_plane = self.scene.add_entity(gs.morphs.Plane())
 
         # Make corridor
-        self.corridor_plane_left = self.scene.add_entity(gs.morphs.Box(size=self.CORRIDOR_BOX_SIZE, fixed=True),
+        self.corridor_plane_left = self.scene.add_entity(gs.morphs.Box(pos=(0, -100, 0),
+                                                                       size=self.CORRIDOR_BOX_SIZE,
+                                                                       fixed=True),
                                                          surface=gs.surfaces.Plastic(color=(0.8, 0.8, 0.8, 0.9)))
-        self.corridor_plane_right = self.scene.add_entity(gs.morphs.Box(size=self.CORRIDOR_BOX_SIZE, fixed=True),
+        self.corridor_plane_right = self.scene.add_entity(gs.morphs.Box(pos=(0, -100, 0),
+                                                                        size=self.CORRIDOR_BOX_SIZE,
+                                                                        fixed=True),
                                                          surface=gs.surfaces.Plastic(color=(0.8, 0.8, 0.8, 0.9)))
         self.corridor_widths = np.random.uniform(low=self.CORRIDOR_WIDTH_RANGE[0], high=self.CORRIDOR_WIDTH_RANGE[1], size=self.num_envs)
         self.corridor_angles = np.random.uniform(low=self.CORRIDOR_ANGLE_RANGE[0], high=self.CORRIDOR_ANGLE_RANGE[1], size=self.num_envs)
@@ -152,6 +167,9 @@ class FlyingSquidEnv(VecEnv):
         self.K = 5.0 * np.eye(10 * 4)
         self.MAX_TENSION = 10.0
         self.RADIUS = 0.2
+
+        # Drone base damping
+        self.D = np.diag([2.0, 2.0, 2.0, 1.0])
 
         # Finally build the scene
         self.scene.build(n_envs=self.num_envs)
@@ -255,20 +273,14 @@ class FlyingSquidEnv(VecEnv):
         num_resets = dones.sum()
 
         if num_resets > 0:
-            # Reset obs history
-            for i in range(self.num_envs):
-                if dones[i]:
-                    self.contact_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 4]))
-                    self.att_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 2]))
-                    self.action_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, self.action_space.shape[0]]))
 
             # Make corridor
             self.corridor_widths[dones] = np.random.uniform(low=self.CORRIDOR_WIDTH_RANGE[0], high=self.CORRIDOR_WIDTH_RANGE[1], size=num_resets)
             self.corridor_angles[dones] = np.random.uniform(low=self.CORRIDOR_ANGLE_RANGE[0], high=self.CORRIDOR_ANGLE_RANGE[1], size=num_resets)
-            self._generate_corridor(width=self.corridor_widths, angle=self.corridor_angles, env_idx=self.envs_idx[dones])
+            self._generate_corridor(width=self.corridor_widths[dones], angle=self.corridor_angles[dones], env_idx=self.envs_idx[dones])
 
             # Generate obstacles
-            self._generate_obstacles(density=0.05, size_range=[0, 2], env_idx=self.envs_idx[dones])
+            self._generate_obstacles(density=0.025, size_range=[0, 2], env_idx=self.envs_idx[dones])
 
             # Init desired direction
             theta = -self.corridor_angles[dones] + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=num_resets)
@@ -281,6 +293,13 @@ class FlyingSquidEnv(VecEnv):
             self.drone.set_dofs_velocity(np.zeros_like(init_pos), envs_idx=self.envs_idx[dones])
             self.step_counts[dones] = np.zeros(num_resets) 
 
+            # Reset obs history
+            for i in range(self.num_envs):
+                if dones[i]:
+                    self.contact_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 4]))
+                    self.att_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 2]))
+                    self.action_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, self.action_space.shape[0]]))
+
         return self._get_observation()
 
     def reset(self):
@@ -289,17 +308,22 @@ class FlyingSquidEnv(VecEnv):
     def step_async(self, actions):
         self.actions = actions
 
-    def _lin_vel_ctrl(self, v, v_des,kp=100):
-        return kp * (v_des[:, :2] - np.array(v[:, :2]))
+    def _lin_vel_ctrl(self, v, v_des, kp=100, ki=25):
+        vel_error = v_des[:, :2] - np.array(v[:, :2])
+        self._integral_vel_error += vel_error * self.dt
+        return (kp * vel_error + ki * self._integral_vel_error)
 
-    def _altitude_ctrl(self, h, hdot, h_des, kp=100, kd=75):
+    def _altitude_ctrl(self, h, hdot, h_des, kp=100, kd=25):
         return (
             kp * (h_des - h) - kd*hdot + 
             self.M * self.g * np.ones_like(h)
         )
 
-    def _rot_vel_ctrl(self, omega, omega_des, kp=10):
-        torque = kp * (omega_des - np.array(omega))
+    def _rot_vel_ctrl(self, omega, omega_des, kp=50, ki=25):
+
+        omega_error = (omega_des - np.array(omega)).reshape([self.num_envs, 1])
+        self._integral_omega_error += omega_error * self.dt
+        torque = kp * omega_error + ki * self._integral_omega_error
         return torque
 
     def _arm_ctrl(self, alpha):
@@ -309,18 +333,26 @@ class FlyingSquidEnv(VecEnv):
 
     def step_wait(self):
 
-        self.step_counts += 1
-
         # Find current state
         p = np.array(self.drone.get_dofs_position())
         v = np.array(self.drone.get_dofs_velocity())
 
+        # Increment counter
+        self.step_counts += 1
+
+        if np.max(np.abs(p)).any() > 1000:  # Arbitrary large boundary
+            print(f"Object out of bounds in environment {np.argwhere(np.max(np.abs(p)))}.")
+
         # If the simulation broke we stop it
         n_env_broken = np.isnan(p).any(axis=1).flatten()
         if n_env_broken.any():
-            print(f"NaN occured in position in environment {np.argwhere(n_env_broken)}.")
-        p[n_env_broken, :] = np.zeros([np.sum(n_env_broken), len(p[0])])
-        v[n_env_broken, :] = np.zeros([np.sum(n_env_broken), len(v[0])])
+            timestep = self.step_counts[np.argwhere(n_env_broken)].flatten()
+            print(f"NaN occured in position in environment {np.argwhere(n_env_broken)}."
+                  + f"At timestep {timestep}={self.dt * timestep} s.")
+        
+        # Ensure the NaN does not propagate 
+        p[n_env_broken, :] = np.zeros([np.sum(n_env_broken), len(p[0, :])])
+        v[n_env_broken, :] = np.zeros([np.sum(n_env_broken), len(v[0, :])])
         sim_break_cost = -1e3 * n_env_broken
 
         # Update Observation hist
@@ -341,16 +373,15 @@ class FlyingSquidEnv(VecEnv):
         # Clip actions
         self.actions = np.clip(
             self.actions * [np.pi, 1.0, self.MAX_ROT_VEL],
-            a_min=[-np.pi, 0, -self.MAX_ROT_VEL],
-            a_max=[np.pi, 1.0, self.MAX_ROT_VEL]
+                     a_min=[-np.pi, 0, -self.MAX_ROT_VEL],
+                     a_max=[np.pi, 1.0, self.MAX_ROT_VEL]
         ).reshape([self.num_envs, 3])  
 
         # Extract the commands from the actions
         # The angle is in the body frame so we rotate it accordingly
-        des_angle = np.arctan2(self.des_dir[:, 0], self.des_dir[:, 1])
-        angle = np.arctan2(np.sin((des_angle + p[:, 3]) + (self.actions[:, 0] - p[:, 3])),
-                           np.cos((des_angle + p[:, 3]) + (self.actions[:, 0] - p[:, 3]))) 
-        v_des = (1 - self.actions[:, 1, np.newaxis]) * self.MAX_LIN_VEL * np.vstack([np.sin(angle), np.cos(angle)]).T
+        angle = np.arctan2(np.sin(self.actions[:, 0] - p[:, 3]),
+                           np.cos(self.actions[:, 0] - p[:, 3])) 
+        v_des = self.actions[:, 1, np.newaxis] * self.MAX_LIN_VEL * np.vstack([np.sin(angle), np.cos(angle)]).T
         omega_des = self.actions[:, 2]
 
         # Draw command arrows
@@ -376,16 +407,19 @@ class FlyingSquidEnv(VecEnv):
 
         # Find stiffness contribution for the arm
         stiffness_contrib = -self.K @ np.array(p[:, 4:]).T
+        # Find damping contribution for the base
+        damping_contrib = -self.D @ np.array(v[:, :4]).T
 
-        # Apply the control and stiffness forces
+        # Apply the control, stiffness, and damping forces
         self.drone.control_dofs_force(
-            np.concatenate([lin_ctrl, h_ctrl, rot_ctrl,
+            np.concatenate([lin_ctrl + damping_contrib[:2, :].T,
+                            h_ctrl + damping_contrib[2:3, :].T,
+                            rot_ctrl + damping_contrib[3:4, :].T,
                             arm_ctrl + stiffness_contrib.T], axis=1)
         )
-        self.scene.step()
 
-        # Episode ends if the pendulum falls
-        max_steps_reached = self.step_counts > self.MAX_STEPS
+        # Episode ends if we reached the max number of steps
+        max_steps_reached = self.step_counts >= self.MAX_STEPS
         dones = (max_steps_reached | n_env_broken)
 
         # Compute reward
@@ -393,13 +427,14 @@ class FlyingSquidEnv(VecEnv):
         distance_traveled = (distance                                          # Encourage distance traveled along
                               - self.prev_distance)                            # the desired direction
         self.prev_distance = distance
-        actuation_cost = (- 1e1 * self.actions[:, 0]**2                        # Penalize deviation from target direction
-                          - 1e1 * self.actions[:, 1]**2                        # Penalize deviation from max vel
-                          - 1e1 * self.actions[:, 2]**2)                       # Penalize rotational velocity
+        #actuation_cost = (- 1e1 * self.actions[:, 0]**2                        # Penalize deviation from target direction
+        #                  - 1e1 * self.actions[:, 1]**2                        # Penalize deviation from max vel
+        #                  - 1e1 * self.actions[:, 2]**2)                       # Penalize rotational velocity
         last_action = np.array(self.action_hist)[:, -1, :]
         actuation_variation_cost = - (np.dot((last_action - self.actions)**2,  # Penalize variation of actuation, i.e weighted  
-                                              1e3 * np.array([1, 1, 1])))      # sum to last action
-        rewards = (1e3 * distance_traveled + actuation_cost + actuation_variation_cost + sim_break_cost)
+                                              1e1 * np.array([1, 1, 1])))      # sum to last action
+        rewards = (1e3 * distance_traveled #+ actuation_cost
+                   + actuation_variation_cost + sim_break_cost)
         
         # Write info dicts
         infos = [{} for _ in range(self.num_envs)]
@@ -411,6 +446,9 @@ class FlyingSquidEnv(VecEnv):
 
         # Reset done environments
         self.reset_(dones=dones)
+
+        # Step the simulator
+        self.scene.step()
 
         # Get observation
         obs = self._get_observation()

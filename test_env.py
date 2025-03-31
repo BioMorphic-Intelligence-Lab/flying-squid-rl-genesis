@@ -2,6 +2,7 @@ import argparse
 
 import numpy as np
 import genesis as gs
+import matplotlib.pyplot as plt
 from baseline.baseline import Baseline
 from stable_baselines3 import PPO
 from env import FlyingSquidEnv
@@ -12,6 +13,7 @@ def read_po():
     parser.add_argument('--dt', type=float, default=0.01, help="Simulation step size")
     parser.add_argument('--T', type=float, default=25.0, help="Simulation end time")
     parser.add_argument('--record', action='store_true', help="Record experiment to video")
+    parser.add_argument('--plot', action='store_true', help="Whether or not to plot the trial.")
     parser.add_argument('--n_envs', type=int, default=1, help="Number of parallel environmnents")
     parser.add_argument('--debug', action='store_true', help="Wether or not to draw debug arrows")
     return parser.parse_args()
@@ -19,15 +21,23 @@ def read_po():
 def main():
     args = read_po()
 
-    #model = PPO.load("models/PPO/5000000.0")
+    #model = PPO.load("models/PPO/3000000.0")
     baseline = Baseline()
 
     n_steps = int(args.T/args.dt)
-    env = FlyingSquidEnv(num_envs=args.n_envs, vis=args.vis, max_steps=int(n_steps/3),
+    env = FlyingSquidEnv(num_envs=args.n_envs, vis=args.vis, max_steps=n_steps,
                         dt=args.dt, history_length=100, debug=args.debug)
     obs = env.reset()
 
+    if args.plot:
+        p_gt = np.zeros([n_steps, env.num_envs, 3])
+        v_gt = np.zeros([n_steps, env.num_envs, 3]) 
+        omega_gt = np.zeros([n_steps, env.num_envs, 1])
+        v_des = np.zeros([n_steps, env.num_envs, 3])
+        omega_des = np.zeros([n_steps, env.num_envs, 1])
+
     a = np.zeros([env.num_envs, 3])
+    acc_reward = 0
 
     if args.record:
         env.cam.start_recording()
@@ -36,12 +46,24 @@ def main():
         for j in range(env.num_envs):
             obs_j = {key: value[j] for key, value in obs.items()}
             a[j, :] = baseline.act(obs_j)
-            #a[j, :] = [0.0, # \delta theta / np.pi
-            #           0.0, # \delta||v|| / MAX_SPEED
-            #           0.0] # omega / MAX_RATE
+            #a[j, :] = [0.5, # theta / np.pi
+            #           1.0, # ||v|| / MAX_SPEED
+            #           0.1] # omega / MAX_RATE
             #a[j, :], _ = model.predict(obs_j)
+            #a[j, 2] = 0.2 
             
         obs, rewards, dones, infos = env.step(a)
+
+        acc_reward += rewards
+        print(f"Accumulative Reward: {acc_reward}")
+
+        if args.plot:
+            p_gt[t, :, :] = env.drone.get_dofs_position()[:, :3]
+            v_gt[t, :, :] = env.drone.get_dofs_velocity()[:, :3]
+            omega_gt[t, :, :] = env.drone.get_dofs_velocity()[:, 3]
+            angle = np.arctan2(obs['des_dir'][0][1], obs['des_dir'][0][0]) - a[0, 0] * np.pi
+            v_des[t, :, :] = env.MAX_LIN_VEL * (1 - a[0, 1]) * np.array([np.cos(angle), np.sin(angle), 0.0])
+            omega_des[t, :, :] = env.MAX_ROT_VEL * a[0, 2]
 
         if np.isnan(env.drone.get_dofs_position()[:3]).any():
             print("NaN detected in position. Exiting.")
@@ -55,6 +77,24 @@ def main():
 
     if args.record:
         env.cam.stop_recording(save_to_filename='video.mp4', fps=24)
+
+
+    if args.plot:
+        fig, axs = plt.subplots(4, 1, figsize=(10, 8))
+        #axs[0].plot(np.arange(n_steps) * args.dt, p_gt[:, :, 0])
+        axs[0].plot(np.arange(n_steps) * args.dt, v_gt[:, :, 0], "--")
+        axs[0].plot(np.arange(n_steps) * args.dt, v_des[:, :, 0], ":", color="black")
+        #axs[1].plot(np.arange(n_steps) * args.dt, p_gt[:, :, 1])
+        axs[1].plot(np.arange(n_steps) * args.dt, v_gt[:, :, 1], "--")
+        axs[1].plot(np.arange(n_steps) * args.dt, v_des[:, :, 1], ":", color="black")
+        #axs[2].plot(np.arange(n_steps) * args.dt, p_gt[:, :, 2])
+        axs[2].plot(np.arange(n_steps) * args.dt, v_gt[:, :, 2], "--")
+        axs[2].plot(np.arange(n_steps) * args.dt, v_des[:, :, 2], ":", color="black")
+
+        axs[3].plot(np.arange(n_steps) * args.dt, omega_gt[:, :, 0], "--")
+        axs[3].plot(np.arange(n_steps) * args.dt, omega_des[:, :, 0], ":", color="black")
+
+        plt.show()
 
 if __name__ == "__main__":
     main()
