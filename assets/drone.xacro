@@ -30,7 +30,7 @@
             <collision>
                 <origin xyz="0 0 ${-l3*0.1}" rpy="0 0 0"/>
                 <geometry>
-                    <cylinder radius="${sqrt(l1*l1 + l2*l2)/2}" length="${l3}"/>
+                    <box size="${l1} ${l2} ${l3}"/>
                 </geometry>
             </collision>
             <inertial>

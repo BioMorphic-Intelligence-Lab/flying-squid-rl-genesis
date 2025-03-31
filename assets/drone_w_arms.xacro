@@ -5,9 +5,10 @@
     <xacro:property name="min_ax" value="-1000"/>
     <xacro:property name="max_ax" value="1000"/>
     <xacro:property name="max_effort" value="10000"/>
-    <xacro:property name="max_velocity" value="10000"/>
+    <xacro:property name="max_velocity" value="100.0"/>
+    <xacro:property name="lin_damping" value="0"/>
+    <xacro:property name="rot_damping" value="0"/>
     
-
     <!-- Include the robot macro -->
     <xacro:include filename="drone.xacro"/>
     <xacro:include filename="dummy_arm.xacro"/>
@@ -24,6 +25,7 @@
         <parent link="world" />
         <child link="p1" />
         <axis xyz="1 0 0"/>
+        <dynamics damping="${lin_damping}" friction="0.0"/>
         <limit lower="${min_ax}" upper="${max_ax}" effort="${max_effort}" velocity="${max_velocity}"/>
     </joint>
 
@@ -31,6 +33,7 @@
         <parent link="p1" />
         <child link="p2" />
         <axis xyz="0 1 0"/>
+        <dynamics damping="${lin_damping}" friction="0.0"/>
         <limit lower="${min_ax}" upper="${max_ax}" effort="${max_effort}" velocity="${max_velocity}"/>
     </joint>
 
@@ -38,6 +41,7 @@
         <parent link="p2" />
         <child link="p3" />
         <axis xyz="0 0 1"/>
+        <dynamics damping="${lin_damping}" friction="0.0"/>
         <limit lower="${min_ax}" upper="${max_ax}" effort="${max_effort}" velocity="${max_velocity}"/>
     </joint>
 
@@ -45,7 +49,8 @@
         <parent link="p3" />
         <child link="drone_base" />
         <axis xyz="0 0 1"/>
-        <dynamics damping="100.0" friction="0.0"/>
+        <dynamics damping="${rot_damping}" friction="0.0"/>
+        <limit lower="${min_ax}" upper="${max_ax}" effort="${max_effort}" velocity="${max_velocity}"/>
     </joint>
 
     <!-- Add dummy arms -->
