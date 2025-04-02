@@ -16,7 +16,9 @@ class FlyingSquidEnv(VecEnv):
                  corridor_angle_range=np.deg2rad([-45, 45]),
                  p_ini=None,
                  yaw_ini=None,
-                 debug=False):
+                 debug=False,
+                 corridor=True,
+                 obstacle_density=0.025):
 
         # Init Genesis running on CPU
         if str.lower(device) == 'cpu':
@@ -63,7 +65,8 @@ class FlyingSquidEnv(VecEnv):
         self.CORRIDOR_WIDTH_RANGE = corridor_width_range
         self.CORRIDOR_ANGLE_RANGE = corridor_angle_range
         self.CORRIDOR_BOX_SIZE = np.array([0.5, 50, 2])
-        self.MAX_OBSTACLE_DENSITY = 0.1
+        self.CORRIDOR = corridor
+        self.MAX_OBSTACLE_DENSITY = obstacle_density
         self.OBSTACTLE_SIZE_RANGE = np.arange(start=0.3, stop=0.8, step=0.2)
         self.FLIGHT_HEIGHT=1.25
 
@@ -128,14 +131,15 @@ class FlyingSquidEnv(VecEnv):
         self.ground_plane = self.scene.add_entity(gs.morphs.Plane())
 
         # Make corridor
-        self.corridor_plane_left = self.scene.add_entity(gs.morphs.Box(pos=(0, -100, 0),
-                                                                       size=self.CORRIDOR_BOX_SIZE,
-                                                                       fixed=True),
-                                                         surface=gs.surfaces.Plastic(color=(0.8, 0.8, 0.8, 0.9)))
-        self.corridor_plane_right = self.scene.add_entity(gs.morphs.Box(pos=(0, -100, 0),
+        if self.CORRIDOR:
+            self.corridor_plane_left = self.scene.add_entity(gs.morphs.Box(pos=(0, -100, 0),
                                                                         size=self.CORRIDOR_BOX_SIZE,
                                                                         fixed=True),
-                                                         surface=gs.surfaces.Plastic(color=(0.8, 0.8, 0.8, 0.9)))
+                                                            surface=gs.surfaces.Plastic(color=(0.8, 0.8, 0.8, 0.9)))
+            self.corridor_plane_right = self.scene.add_entity(gs.morphs.Box(pos=(0, -100, 0),
+                                                                            size=self.CORRIDOR_BOX_SIZE,
+                                                                            fixed=True),
+                                                            surface=gs.surfaces.Plastic(color=(0.8, 0.8, 0.8, 0.9)))
         self.corridor_widths = np.random.uniform(low=self.CORRIDOR_WIDTH_RANGE[0], high=self.CORRIDOR_WIDTH_RANGE[1], size=self.num_envs)
         self.corridor_angles = np.random.uniform(low=self.CORRIDOR_ANGLE_RANGE[0], high=self.CORRIDOR_ANGLE_RANGE[1], size=self.num_envs)
 
@@ -277,10 +281,12 @@ class FlyingSquidEnv(VecEnv):
             # Make corridor
             self.corridor_widths[dones] = np.random.uniform(low=self.CORRIDOR_WIDTH_RANGE[0], high=self.CORRIDOR_WIDTH_RANGE[1], size=num_resets)
             self.corridor_angles[dones] = np.random.uniform(low=self.CORRIDOR_ANGLE_RANGE[0], high=self.CORRIDOR_ANGLE_RANGE[1], size=num_resets)
-            self._generate_corridor(width=self.corridor_widths[dones], angle=self.corridor_angles[dones], env_idx=self.envs_idx[dones])
+
+            if self.CORRIDOR:
+                self._generate_corridor(width=self.corridor_widths[dones], angle=self.corridor_angles[dones], env_idx=self.envs_idx[dones])
 
             # Generate obstacles
-            self._generate_obstacles(density=0.025, size_range=[0, 2], env_idx=self.envs_idx[dones])
+            self._generate_obstacles(density=self.MAX_OBSTACLE_DENSITY, size_range=[0, 2], env_idx=self.envs_idx[dones])
 
             # Init desired direction
             theta = -self.corridor_angles[dones] + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=num_resets)
