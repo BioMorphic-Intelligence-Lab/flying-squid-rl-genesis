@@ -308,6 +308,9 @@ class FlyingSquidEnv(VecEnv):
                     self.contact_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 4]))
                     self.att_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 2]))
                     self.action_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, self.action_space.shape[0]]))
+                    # Init last element in action hist with optimal action
+                    self.action_hist[i].popleft()
+                    self.action_hist[i].append([np.arctan2(self.des_dir[i, 0], self.des_dir[i, 1]), 1.0, 0.0])
 
         return self._get_observation()
 
