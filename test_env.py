@@ -1,5 +1,4 @@
 import argparse
-
 import numpy as np
 import genesis as gs
 import matplotlib.pyplot as plt
@@ -16,17 +15,20 @@ def read_po():
     parser.add_argument('--plot', action='store_true', help="Whether or not to plot the trial.")
     parser.add_argument('--n_envs', type=int, default=1, help="Number of parallel environmnents")
     parser.add_argument('--debug', action='store_true', help="Wether or not to draw debug arrows")
+    parser.add_argument('--corridor', action='store_true', help="Wether or not to make a corridor")
+    parser.add_argument('--obstacle_density', type=float, default=0.025, help="Obstacle density")
     return parser.parse_args()
 
 def main():
     args = read_po()
-
-    #model = PPO.load("models/PPO/3000000.0")
-    baseline = Baseline()
-
     n_steps = int(args.T/args.dt)
     env = FlyingSquidEnv(num_envs=args.n_envs, vis=args.vis, max_steps=n_steps,
-                        dt=args.dt, history_length=100, debug=args.debug)
+                         obstacle_density=args.obstacle_density, corridor=args.corridor,
+                         dt=args.dt, history_length=100, debug=args.debug)
+
+    model = PPO.load("./models/named_models/best_follower.zip")
+    bl = Baseline()
+
     obs = env.reset()
 
     if args.plot:
@@ -45,13 +47,12 @@ def main():
     for t in range(n_steps):
         for j in range(env.num_envs):
             obs_j = {key: value[j] for key, value in obs.items()}
-            a[j, :] = baseline.act(obs_j)
+            a[j, :] = bl.act(obs_j)
             #a[j, :] = [0.5, # theta / np.pi
             #           1.0, # ||v|| / MAX_SPEED
             #           0.1] # omega / MAX_RATE
             #a[j, :], _ = model.predict(obs_j)
-            #a[j, 2] = 0.2 
-            
+
         obs, rewards, dones, infos = env.step(a)
 
         acc_reward += rewards
