@@ -9,7 +9,8 @@ class FlyingSquidEnv(VecEnv):
     def __init__(self, vis=False, device='cpu',
                  max_steps=2000,
                  max_lin_vel=1.5, max_rot_vel=2,
-                 history_length=100,
+                 history_duration=20.0,
+                 observation_length=10,
                  num_envs=10,
                  dt=0.01, g=9.81,
                  corridor_width_range=[2, 5],
@@ -40,13 +41,13 @@ class FlyingSquidEnv(VecEnv):
         #    - desired angular velocity
         action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(3,))
         # Observation Space { 'des_dir': [sin(phi), cos(phi)]
-        #                    'contacts': [[FR, FL, RL, RR] * history_length]
-        #                         'att': [[sin(theta), cos(theta)] * hisotry_length]  } 
+        #                    'contacts': [[FR, FL, RL, RR] * observation_length]
+        #                         'att': [[sin(theta), cos(theta)] * observation_length]  } 
         observation_space = gym.spaces.Dict({
              'des_dir': gym.spaces.Box(low=-1, high=1, shape=(2,)),
-            'contacts': gym.spaces.MultiBinary((history_length, 4)),
-                 'att': gym.spaces.Box(low=-1, high=1, shape=(history_length, 2)),
-           'prev_cmds': gym.spaces.Box(low=-1, high=1, shape=(history_length, action_space.shape[0]))
+            'contacts': gym.spaces.MultiBinary((observation_length, 4)),
+                 'att': gym.spaces.Box(low=-1, high=1, shape=(observation_length, 2)),
+           'prev_cmds': gym.spaces.Box(low=-1, high=1, shape=(observation_length, action_space.shape[0]))
         })
 
         # Init the Vector Env
@@ -61,7 +62,9 @@ class FlyingSquidEnv(VecEnv):
         self.MAX_STEPS = max_steps
         self.MAX_LIN_VEL = max_lin_vel
         self.MAX_ROT_VEL = max_rot_vel
-        self.HISTORY_LENGTH = history_length
+        self.OBSERVATION_LENTGH = observation_length
+        self.HISTORY_DURATION = history_duration
+        self.HISTORY_LENGTH = int(np.ceil(self.HISTORY_DURATION / self.dt))
         self.CORRIDOR_WIDTH_RANGE = corridor_width_range
         self.CORRIDOR_ANGLE_RANGE = corridor_angle_range
         self.CORRIDOR_BOX_SIZE = np.array([0.5, 50, 2])
@@ -469,14 +472,48 @@ class FlyingSquidEnv(VecEnv):
 
         return obs, rewards, dones, infos
     
-    def _get_observation(self):        
+    def _get_observation(self):     
+
+        # Generate logarithmically spaced window boundaries   
+        log_edges = np.logspace(0, np.log10(self.HISTORY_LENGTH), num=self.OBSERVATION_LENTGH+1, endpoint=True) 
+        log_edges = self.HISTORY_LENGTH - np.round(log_edges[::-1]).astype(int)  # reverse so small windows come last
+
+        # Ensure indices are within bounds and ensure last observation is accumulated as singleton
+        log_edges[-1] = self.HISTORY_LENGTH
+        log_edges[-2] = self.HISTORY_LENGTH - 1
+        log_edges[0] = 0
+
+        # Get the history of contacts, attitude, and actions as array instead of dequeues
         contact_hist = np.array([contact for contact in self.contact_hist])
         att_hist = np.array([att for att in self.att_hist])
         action_hist = np.array([action for action in self.action_hist])
+
+        # Create empty arrays for contact, attitude, and action history observations
+        contact_obs = np.zeros([self.num_envs, self.OBSERVATION_LENTGH, 4], dtype=bool)
+        att_obs = np.zeros([self.num_envs, self.OBSERVATION_LENTGH, 2])
+        action_obs = np.zeros([self.num_envs, self.OBSERVATION_LENTGH, self.action_space.shape[0]])
+
+        for i in range(self.OBSERVATION_LENTGH):
+            # Define start and stop indeces
+            start = log_edges[i]
+            end = log_edges[i+1]
+            
+            # Binary or accumulation of the contact signals for different windows. The window size changes logarithmically
+            # i.e., the window size is larger for older samples and shorter for recent samples
+            contact_obs[:, i, :] = np.any(contact_hist[:, start:end, :], axis=1)
+
+            # Mean accumulation of the attitude and action signals for different windows. The window size changes logarithmically
+            # i.e., the window size is larger for older samples and shorter for recent samples
+            att_obs[:, i, :] = np.mean(att_hist[:, start:end, :], axis=1)
+            action_obs[:, i, :] = np.mean(action_hist[:, start:end, :], axis=1)
+
+        assert (contact_obs[:, -1, :] == contact_hist[:, -1, :]).all(), f"Last contact in obs {contact_obs[:, -1, :]} should be the same as the last contact in history {contact_hist[:, -1, :]}"
+        assert (att_obs[:, -1, :] == att_hist[:, -1, :]).all(), f"Last attitude in obs {att_obs[:, -1, :]} should be the same as the last attitude in history {att_hist[:, -1, :]}"
+
         return { 'des_dir': self.des_dir,
-                'contacts': contact_hist,
-                     'att': att_hist,
-               'prev_cmds': action_hist}
+                'contacts': contact_obs,
+                     'att': att_obs,
+               'prev_cmds': action_obs}
     
     def close(self):
         pass

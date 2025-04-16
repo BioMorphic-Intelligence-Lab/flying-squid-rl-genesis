@@ -24,7 +24,8 @@ def main():
     n_steps = int(args.T/args.dt)
     env = FlyingSquidEnv(num_envs=args.n_envs, vis=args.vis, max_steps=n_steps,
                          obstacle_density=args.obstacle_density, corridor=args.corridor,
-                         dt=args.dt, history_length=100, debug=args.debug)
+                         dt=args.dt, history_duration=15.0, observation_length=10,
+                         debug=args.debug)
 
     model = PPO.load("./models/named_models/best_follower.zip")
     bl = Baseline()
