@@ -42,11 +42,12 @@ class FlyingSquidEnv(VecEnv):
         action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(3,))
         # Observation Space { 'des_dir': [sin(phi), cos(phi)]
         #                    'contacts': [[FR, FL, RL, RR] * observation_length]
-        #                         'att': [[sin(theta), cos(theta)] * observation_length]  } 
+        #                     'ang_vel': [[theta_dot] * observation_length]
+    #                       'prev_cmds': [[theta, ||v||, omega] * observation_length]} 
         observation_space = gym.spaces.Dict({
              'des_dir': gym.spaces.Box(low=-1, high=1, shape=(2,)),
             'contacts': gym.spaces.MultiBinary((observation_length, 4)),
-                 'att': gym.spaces.Box(low=-1, high=1, shape=(observation_length, 2)),
+             'ang_vel': gym.spaces.Box(low=-1, high=1, shape=(observation_length, 1)),
            'prev_cmds': gym.spaces.Box(low=-1, high=1, shape=(observation_length, action_space.shape[0]))
         })
 
@@ -101,7 +102,7 @@ class FlyingSquidEnv(VecEnv):
 
         # Init Observation hist
         self.contact_hist = [deque(np.zeros([self.HISTORY_LENGTH, 4])) for _ in range(self.num_envs)]
-        self.att_hist = [deque(np.zeros([self.HISTORY_LENGTH, 2])) for _ in range(self.num_envs)]
+        self.ang_vel_hist = [deque(np.zeros([self.HISTORY_LENGTH, 1])) for _ in range(self.num_envs)]
         self.action_hist = [deque(np.zeros([self.HISTORY_LENGTH, self.action_space.shape[0]])) for _ in range(self.num_envs)]
         self.prev_distance = np.zeros(self.num_envs)
 
@@ -306,7 +307,7 @@ class FlyingSquidEnv(VecEnv):
             for i in range(self.num_envs):
                 if dones[i]:
                     self.contact_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 4]))
-                    self.att_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 2]))
+                    self.ang_vel_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, 1]))
                     self.action_hist[i] = deque(np.zeros([self.HISTORY_LENGTH, self.action_space.shape[0]]))
                     # Init last element in action hist with optimal action
                     self.action_hist[i].popleft()
@@ -374,8 +375,8 @@ class FlyingSquidEnv(VecEnv):
         for n in range(self.num_envs):
             self.contact_hist[n].popleft()
             self.contact_hist[n].append(contacts[n, :])
-            self.att_hist[n].popleft()
-            self.att_hist[n].append(np.array([np.sin(p[n, 3]), np.cos(p[n, 3])]))
+            self.ang_vel_hist[n].popleft()
+            self.ang_vel_hist[n].append(np.array([v[n, 3]]))
             self.action_hist[n].popleft()
             self.action_hist[n].append(self.actions[n, :])
 
@@ -477,46 +478,36 @@ class FlyingSquidEnv(VecEnv):
     
     def _get_observation(self):     
 
-        # Generate logarithmically spaced window boundaries   
-        #log_edges = np.logspace(0, np.log10(self.HISTORY_LENGTH), num=self.OBSERVATION_LENTGH+1, endpoint=True) 
-        #log_edges = self.HISTORY_LENGTH - np.round(log_edges[::-1]).astype(int)  # reverse so small windows come last
-
-        # Ensure indices are within bounds and ensure last observation is accumulated as singleton
-        #log_edges[-1] = self.HISTORY_LENGTH
-        #log_edges[-2] = self.HISTORY_LENGTH - 1
-        #log_edges[0] = 0
-        log_edges = np.linspace(0, self.HISTORY_LENGTH, num=self.OBSERVATION_LENTGH+1, endpoint=True).astype(int)
+        # Create edges from where to where to accumulate the history vectors
+        edges = np.linspace(0, self.HISTORY_LENGTH, num=self.OBSERVATION_LENTGH+1, endpoint=True).astype(int)
         
-        # Get the history of contacts, attitude, and actions as array instead of dequeues
+        # Get the history of contacts, angular vels, and actions as array instead of dequeues
         contact_hist = np.array([contact for contact in self.contact_hist])
-        att_hist = np.array([att for att in self.att_hist])
+        ang_vel_hist = np.array([ang_vel for ang_vel in self.ang_vel_hist])
         action_hist = np.array([action for action in self.action_hist])
 
-        # Create empty arrays for contact, attitude, and action history observations
+        # Create empty arrays for contact, angular vels, and action history observations
         contact_obs = np.zeros([self.num_envs, self.OBSERVATION_LENTGH, 4], dtype=bool)
-        att_obs = np.zeros([self.num_envs, self.OBSERVATION_LENTGH, 2])
+        ang_vel_obs = np.zeros([self.num_envs, self.OBSERVATION_LENTGH, 1])
         action_obs = np.zeros([self.num_envs, self.OBSERVATION_LENTGH, self.action_space.shape[0]])
 
         for i in range(self.OBSERVATION_LENTGH):
             # Define start and stop indeces
-            start = log_edges[i]
-            end = log_edges[i+1]
+            start = edges[i]
+            end = edges[i+1]
             
             # Binary or accumulation of the contact signals for different windows. The window size changes logarithmically
             # i.e., the window size is larger for older samples and shorter for recent samples
             contact_obs[:, i, :] = np.any(contact_hist[:, start:end, :], axis=1)
 
-            # Mean accumulation of the attitude and action signals for different windows. The window size changes logarithmically
+            # Mean accumulation of the angular vel and action signals for different windows. The window size changes logarithmically
             # i.e., the window size is larger for older samples and shorter for recent samples
-            att_obs[:, i, :] = np.mean(att_hist[:, start:end, :], axis=1)
+            ang_vel_obs[:, i, :] = np.mean(ang_vel_hist[:, start:end, :], axis=1)
             action_obs[:, i, :] = np.mean(action_hist[:, start:end, :], axis=1)
-
-        #assert (contact_obs[:, -1, :] == contact_hist[:, -1, :]).all(), f"Last contact in obs {contact_obs[:, -1, :]} should be the same as the last contact in history {contact_hist[:, -1, :]}"
-        #assert (att_obs[:, -1, :] == att_hist[:, -1, :]).all(), f"Last attitude in obs {att_obs[:, -1, :]} should be the same as the last attitude in history {att_hist[:, -1, :]}"
 
         return { 'des_dir': self.des_dir,
                 'contacts': contact_obs,
-                     'att': att_obs,
+                 'ang_vel': ang_vel_obs,
                'prev_cmds': action_obs}
     
     def close(self):
