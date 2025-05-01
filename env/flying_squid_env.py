@@ -478,14 +478,15 @@ class FlyingSquidEnv(VecEnv):
     def _get_observation(self):     
 
         # Generate logarithmically spaced window boundaries   
-        log_edges = np.logspace(0, np.log10(self.HISTORY_LENGTH), num=self.OBSERVATION_LENTGH+1, endpoint=True) 
-        log_edges = self.HISTORY_LENGTH - np.round(log_edges[::-1]).astype(int)  # reverse so small windows come last
+        #log_edges = np.logspace(0, np.log10(self.HISTORY_LENGTH), num=self.OBSERVATION_LENTGH+1, endpoint=True) 
+        #log_edges = self.HISTORY_LENGTH - np.round(log_edges[::-1]).astype(int)  # reverse so small windows come last
 
         # Ensure indices are within bounds and ensure last observation is accumulated as singleton
-        log_edges[-1] = self.HISTORY_LENGTH
-        log_edges[-2] = self.HISTORY_LENGTH - 1
-        log_edges[0] = 0
-
+        #log_edges[-1] = self.HISTORY_LENGTH
+        #log_edges[-2] = self.HISTORY_LENGTH - 1
+        #log_edges[0] = 0
+        log_edges = np.linspace(0, self.HISTORY_LENGTH, num=self.OBSERVATION_LENTGH+1, endpoint=True).astype(int)
+        
         # Get the history of contacts, attitude, and actions as array instead of dequeues
         contact_hist = np.array([contact for contact in self.contact_hist])
         att_hist = np.array([att for att in self.att_hist])
@@ -510,8 +511,8 @@ class FlyingSquidEnv(VecEnv):
             att_obs[:, i, :] = np.mean(att_hist[:, start:end, :], axis=1)
             action_obs[:, i, :] = np.mean(action_hist[:, start:end, :], axis=1)
 
-        assert (contact_obs[:, -1, :] == contact_hist[:, -1, :]).all(), f"Last contact in obs {contact_obs[:, -1, :]} should be the same as the last contact in history {contact_hist[:, -1, :]}"
-        assert (att_obs[:, -1, :] == att_hist[:, -1, :]).all(), f"Last attitude in obs {att_obs[:, -1, :]} should be the same as the last attitude in history {att_hist[:, -1, :]}"
+        #assert (contact_obs[:, -1, :] == contact_hist[:, -1, :]).all(), f"Last contact in obs {contact_obs[:, -1, :]} should be the same as the last contact in history {contact_hist[:, -1, :]}"
+        #assert (att_obs[:, -1, :] == att_hist[:, -1, :]).all(), f"Last attitude in obs {att_obs[:, -1, :]} should be the same as the last attitude in history {att_hist[:, -1, :]}"
 
         return { 'des_dir': self.des_dir,
                 'contacts': contact_obs,

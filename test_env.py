@@ -27,7 +27,7 @@ def main():
                          dt=args.dt, history_duration=15.0, observation_length=10,
                          debug=args.debug)
 
-    model = PPO.load("./models/named_models/best_follower.zip")
+    model = PPO.load("./models/PPO/11000000.0")
     bl = Baseline()
 
     obs = env.reset()
@@ -48,11 +48,11 @@ def main():
     for t in range(n_steps):
         for j in range(env.num_envs):
             obs_j = {key: value[j] for key, value in obs.items()}
-            a[j, :] = bl.act(obs_j)
+            #a[j, :] = bl.act(obs_j)
             #a[j, :] = [0.5, # theta / np.pi
             #           1.0, # ||v|| / MAX_SPEED
             #           0.1] # omega / MAX_RATE
-            #a[j, :], _ = model.predict(obs_j)
+            a[j, :], _ = model.predict(obs_j)
 
         obs, rewards, dones, infos = env.step(a)
 

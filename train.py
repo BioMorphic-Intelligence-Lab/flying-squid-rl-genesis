@@ -19,7 +19,7 @@ def main(argv):
     
     env = VecMonitor(
         FlyingSquidEnv(num_envs=50, max_steps=3000, corridor=True, obstacle_density=0.0,
-                       dt=0.01, history_length=100)
+                       dt=0.01, history_duration=15.0, observation_length=10)
     )
 
     if "-c" in argv:
@@ -33,19 +33,19 @@ def main(argv):
             model = PPO.load(argument)  
             model.set_env(env)
 
-        params = model.get_parameters()
+        #params = model.get_parameters()
         # Modify the optimizer state
-        if "policy.optimizer" in params:
-            for param_group in params["policy.optimizer"]["param_groups"]:
-                param_group["lr"] = 1e-20  # Set your desired learning rate
-                param_group["entropy_coeff"] = 1e-4
-                param_group["gamma"] = 1.0 - 1e-3
-        model.set_parameters(params)
+        #if "policy.optimizer" in params:
+        #    for param_group in params["policy.optimizer"]["param_groups"]:
+        #        param_group["lr"] = 1e-20  # Set your desired learning rate
+        #        param_group["entropy_coeff"] = 1e-4
+        #        param_group["gamma"] = 1.0 - 1e-3
+        #model.set_parameters(params)
 
 
     else:
         number = 0
-        net_arch_dict = dict({"pi": [64, 64, 64, 64], "vf": [64, 64, 64, 64]})
+        net_arch_dict = dict({"pi": [32, 32], "vf": [32, 32]})
 
         policy_kwargs = dict(activation_fn=torch.nn.Tanh,
                             net_arch=net_arch_dict,
@@ -53,7 +53,7 @@ def main(argv):
                             ortho_init=True)
         
         model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=logdir,
-                     policy_kwargs=policy_kwargs, learning_rate=1e-10)
+                     policy_kwargs=policy_kwargs)
     
     # Train the agent
     TIMESTEPS = 1e6
