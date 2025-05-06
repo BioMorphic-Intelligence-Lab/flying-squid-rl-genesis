@@ -27,7 +27,7 @@ def main():
                          dt=args.dt, history_duration=15.0, observation_length=10,
                          debug=args.debug)
 
-    model = PPO.load("./models/PPO/11000000.0")
+    model = PPO.load("./models/named_models/best_follower")
     bl = Baseline()
 
     obs = env.reset()
