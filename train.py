@@ -18,7 +18,9 @@ def main(argv):
         os.makedirs(logdir)
     
     env = VecMonitor(
-        FlyingSquidEnv(num_envs=50, max_steps=3000, corridor=True, obstacle_density=0.0,
+        FlyingSquidEnv(num_envs=50, max_steps=3000, corridor=True,
+                       cylinder_obstacle_density=0.0,
+                       box_obstacle_density=0.05,
                        dt=0.01, history_duration=15.0, observation_length=10)
     )
 

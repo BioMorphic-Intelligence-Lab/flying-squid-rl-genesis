@@ -16,14 +16,17 @@ def read_po():
     parser.add_argument('--n_envs', type=int, default=1, help="Number of parallel environmnents")
     parser.add_argument('--debug', action='store_true', help="Wether or not to draw debug arrows")
     parser.add_argument('--corridor', action='store_true', help="Wether or not to make a corridor")
-    parser.add_argument('--obstacle_density', type=float, default=0.025, help="Obstacle density")
+    parser.add_argument('--cylinder_obstacle_density', type=float, default=0.025, help="Obstacle density")
+    parser.add_argument('--box_obstacle_density', type=float, default=0.025, help="Obstacle density")
     return parser.parse_args()
 
 def main():
     args = read_po()
     n_steps = int(args.T/args.dt)
     env = FlyingSquidEnv(num_envs=args.n_envs, vis=args.vis, max_steps=n_steps,
-                         obstacle_density=args.obstacle_density, corridor=args.corridor,
+                         cylinder_obstacle_density=args.cylinder_obstacle_density,
+                         box_obstacle_density=args.box_obstacle_density,
+                         corridor=args.corridor,
                          dt=args.dt, history_duration=15.0, observation_length=10,
                          debug=args.debug)
 

@@ -19,7 +19,8 @@ class FlyingSquidEnv(VecEnv):
                  yaw_ini=None,
                  debug=False,
                  corridor=True,
-                 obstacle_density=0.025):
+                 cylinder_obstacle_density=0.025,
+                 box_obstacle_density=0.025):
 
         # Init Genesis running on CPU
         if str.lower(device) == 'cpu':
@@ -70,7 +71,8 @@ class FlyingSquidEnv(VecEnv):
         self.CORRIDOR_ANGLE_RANGE = corridor_angle_range
         self.CORRIDOR_BOX_SIZE = np.array([0.5, 50, 2])
         self.CORRIDOR = corridor
-        self.MAX_OBSTACLE_DENSITY = obstacle_density
+        self.CYLINDER_OBSTACLE_DENSITY = cylinder_obstacle_density
+        self.BOX_OBSTACLE_DENSITY = box_obstacle_density
         self.OBSTACTLE_SIZE_RANGE = np.arange(start=0.3, stop=0.8, step=0.2)
         self.FLIGHT_HEIGHT=1.25
 
@@ -148,15 +150,28 @@ class FlyingSquidEnv(VecEnv):
         self.corridor_angles = np.random.uniform(low=self.CORRIDOR_ANGLE_RANGE[0], high=self.CORRIDOR_ANGLE_RANGE[1], size=self.num_envs)
 
         # Init obstacle arrays
-        self.obstacles = [
+        self.cylinder_obstacles = [
             [self.scene.add_entity(
                 gs.morphs.Cylinder(pos=(0, -5, 0.5 * self.CORRIDOR_BOX_SIZE[2]), euler=(0, 0, 0),
                                     radius=radius, height=self.CORRIDOR_BOX_SIZE[2],
                                     fixed=True)) 
-                for _ in range(int(self.MAX_OBSTACLE_DENSITY * self.CORRIDOR_WIDTH_RANGE[1] * self.CORRIDOR_BOX_SIZE[1]))]
+                for _ in range(int(self.CYLINDER_OBSTACLE_DENSITY * self.CORRIDOR_WIDTH_RANGE[1] * self.CORRIDOR_BOX_SIZE[1]))]
             for radius in self.OBSTACTLE_SIZE_RANGE
         ] 
-        self.obstacle_counters = np.zeros(len(self.OBSTACTLE_SIZE_RANGE))
+        self.cylinder_obstacle_counters = np.zeros(len(self.OBSTACTLE_SIZE_RANGE))
+
+        # Init obstacle arrays
+        self.box_obstacles = [
+            [self.scene.add_entity(
+                gs.morphs.Box(pos=(0, -5, 0.5 * self.CORRIDOR_BOX_SIZE[2]),
+                              euler=(0, 0, 0),
+                              size=(width, width, self.CORRIDOR_BOX_SIZE[2]),
+                              fixed=True)
+                ) 
+                for _ in range(int(self.BOX_OBSTACLE_DENSITY * self.CORRIDOR_WIDTH_RANGE[1] * self.CORRIDOR_BOX_SIZE[1]))]
+            for width in self.OBSTACTLE_SIZE_RANGE
+        ] 
+        self.box_obstacle_counters = np.zeros(len(self.OBSTACTLE_SIZE_RANGE))
 
         # Init desired direction
         theta = np.zeros(self.num_envs) #self.corridor_angles + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=self.num_envs)
@@ -190,22 +205,28 @@ class FlyingSquidEnv(VecEnv):
         self.drone.set_dofs_position(init_pos)
         self.drone.set_dofs_velocity(np.zeros_like(init_pos))
 
-    def _generate_obstacles(self, density, size_range, env_idx, offset=1.0):
+    def _generate_obstacles(self, size_range, env_idx, offset=1.0):
 
         # Set all obstacle positons back to the original place
-        for radius in self.obstacles:
+        for radius in self.cylinder_obstacles:
+            for obstacle in radius:
+                pos = np.array([[0, -5, 0.5 * self.CORRIDOR_BOX_SIZE[2]] for _ in range(len(env_idx))])
+                obstacle.set_pos(pos, envs_idx=env_idx)
+
+        for size in self.box_obstacles:
             for obstacle in radius:
                 pos = np.array([[0, -5, 0.5 * self.CORRIDOR_BOX_SIZE[2]] for _ in range(len(env_idx))])
                 obstacle.set_pos(pos, envs_idx=env_idx)
 
         # Find number of obstacles
-        num_obstacles = (density * self.corridor_widths[env_idx] * (self.CORRIDOR_BOX_SIZE[1] - offset)).astype(int)
-
+        num_cylinders = (self.CYLINDER_OBSTACLE_DENSITY * self.corridor_widths[env_idx] * (self.CORRIDOR_BOX_SIZE[1] - offset)).astype(int)
+        num_boxes = (self.BOX_OBSTACLE_DENSITY * self.corridor_widths[env_idx] * (self.CORRIDOR_BOX_SIZE[1] - offset)).astype(int)
+        
         # Init pos vector
         pos = np.zeros([len(env_idx), 3])
 
         # Loop over environments
-        for idx, n in enumerate(num_obstacles):
+        for idx, n in enumerate(num_cylinders):
             # Loop over number of obstaces
             for i in range(n):
                 # Randomly select radius
@@ -228,7 +249,42 @@ class FlyingSquidEnv(VecEnv):
                 pos[2] = 0.5 * self.CORRIDOR_BOX_SIZE[2]
 
                 # Set position of obstacle
-                self.obstacles[radius_idx][i].set_pos(pos[np.newaxis, :], envs_idx=[env_idx[idx]])
+                self.cylinder_obstacles[radius_idx][i].set_pos(pos[np.newaxis, :], envs_idx=[env_idx[idx]])
+
+                # Init pos vector
+        pos = np.zeros([len(env_idx), 3])
+
+        # Loop over environments
+        for idx, n in enumerate(num_boxes):
+            # Loop over number of obstaces
+            for i in range(n):
+                # Randomly select radius
+                radius_idx = np.random.choice(range(*size_range))
+                # Define rotation matrix z-axis
+                cT = np.cos(self.corridor_angles[env_idx[idx]])
+                sT = np.sin(self.corridor_angles[env_idx[idx]])
+                rot = np.array([[cT, -sT, 0],
+                                [sT, cT, 0],
+                                [0, 0, 1
+                ]])
+                # Get random location inside coridor
+                pos = (self.P_INI[env_idx[idx], :]
+                        + rot @ np.random.uniform(
+                            low= [-0.5 * self.corridor_widths[env_idx[idx]] + self.OBSTACTLE_SIZE_RANGE[radius_idx], offset, 0],
+                            high=[ 0.5 * self.corridor_widths[env_idx[idx]] - self.OBSTACTLE_SIZE_RANGE[radius_idx], self.CORRIDOR_BOX_SIZE[1], 0],
+                            size=3)
+                )
+                # Set height
+                pos[2] = 0.5 * self.CORRIDOR_BOX_SIZE[2]
+
+                # Find quat
+                quat = np.array([np.cos(self.corridor_angles[env_idx[idx]] / 2), # w
+                                 0, 0, np.sin(self.corridor_angles[env_idx[idx]] / 2)] # x y z
+                                 )
+
+                # Set position of obstacle
+                self.box_obstacles[radius_idx][i].set_pos(pos[np.newaxis, :], envs_idx=[env_idx[idx]])
+                self.box_obstacles[radius_idx][i].set_quat(quat[np.newaxis, :], env_idx[idx])
 
     def _generate_corridor(self, width, angle, env_idx):
         # Ensure `angle` is a column vector of shape (len(env_idx), 1) for broadcasting
@@ -290,7 +346,7 @@ class FlyingSquidEnv(VecEnv):
                 self._generate_corridor(width=self.corridor_widths[dones], angle=self.corridor_angles[dones], env_idx=self.envs_idx[dones])
 
             # Generate obstacles
-            self._generate_obstacles(density=self.MAX_OBSTACLE_DENSITY, size_range=[0, 2], env_idx=self.envs_idx[dones])
+            self._generate_obstacles(size_range=[0, 2], env_idx=self.envs_idx[dones])
 
             # Init desired direction
             theta = -self.corridor_angles[dones] + np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=num_resets)
@@ -440,6 +496,8 @@ class FlyingSquidEnv(VecEnv):
         distance_traveled = (distance                                          # Encourage distance traveled along
                               - self.prev_distance)                            # the desired direction
         self.prev_distance = distance
+        # Penalize if velocity is too low
+        velocity_penalty = -1e2 * (np.linalg.norm(v[:, :2], axis=1) < 0.05).astype(float)
         #actuation_cost = (- 1e1 * self.actions[:, 0]**2                        # Penalize deviation from target direction
         #                  - 1e1 * self.actions[:, 1]**2                        # Penalize deviation from max vel
         #                  - 1e1 * self.actions[:, 2]**2)                       # Penalize rotational velocity
@@ -447,7 +505,7 @@ class FlyingSquidEnv(VecEnv):
         actuation_variation_cost = - (np.dot((last_action - self.actions)**2,  # Penalize variation of actuation, i.e weighted  
                                               1e1 * np.array([1, 1, 1])))      # sum to last action
         rewards = (1e3 * distance_traveled #+ actuation_cost
-                   + actuation_variation_cost + sim_break_cost)
+                   + actuation_variation_cost + sim_break_cost + velocity_penalty)
         
         # Write info dicts
         infos = [{} for _ in range(self.num_envs)]
