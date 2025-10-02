@@ -6,9 +6,9 @@
 <robot name="drone_w_arms">
   <link name="drone_base">
     <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <origin rpy="0 0 0" xyz="0 0 -0.010000000000000002"/>
       <geometry>
-        <mesh filename="./meshes/Holybro-X500-V2-no-landinggear.dae" scale="0.001 0.001 0.001"/>
+        <box size="0.45 0.45 0.1"/>
       </geometry>
     </visual>
     <collision>
@@ -25,9 +25,9 @@
   </link>
   <link name="drone_prop1">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0.02"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="./meshes/1345_prop_ccw.dae" scale="0.75 0.75 0.75"/>
+        <cylinder length="0.01" radius="0.125"/>
       </geometry>
     </visual>
     <collision>
@@ -44,9 +44,9 @@
   </link>
   <link name="drone_prop2">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0.02"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="./meshes/1345_prop_cw.dae" scale="0.75 0.75 0.75"/>
+        <cylinder length="0.01" radius="0.125"/>
       </geometry>
     </visual>
     <collision>
@@ -63,9 +63,9 @@
   </link>
   <link name="drone_prop3">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0.02"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="./meshes/1345_prop_ccw.dae" scale="0.75 0.75 0.75"/>
+        <cylinder length="0.01" radius="0.125"/>
       </geometry>
     </visual>
     <collision>
@@ -82,9 +82,9 @@
   </link>
   <link name="drone_prop4">
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0.02"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="./meshes/1345_prop_cw.dae" scale="0.75 0.75 0.75"/>
+        <cylinder length="0.01" radius="0.125"/>
       </geometry>
     </visual>
     <collision>
@@ -165,7 +165,7 @@
   <link name="arm1_link_1">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -191,7 +191,7 @@
   <link name="arm1_link_2">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -218,7 +218,7 @@
   <link name="arm1_link_3">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -245,7 +245,7 @@
   <link name="arm1_link_4">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -272,7 +272,7 @@
   <link name="arm1_link_5">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -299,7 +299,7 @@
   <link name="arm1_link_6">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -326,7 +326,7 @@
   <link name="arm1_link_7">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -353,7 +353,7 @@
   <link name="arm1_link_8">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -380,7 +380,7 @@
   <link name="arm1_link_9">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -407,7 +407,7 @@
   <link name="arm1_link_10">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -458,7 +458,7 @@
   <link name="arm2_link_1">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -484,7 +484,7 @@
   <link name="arm2_link_2">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -511,7 +511,7 @@
   <link name="arm2_link_3">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -538,7 +538,7 @@
   <link name="arm2_link_4">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -565,7 +565,7 @@
   <link name="arm2_link_5">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -592,7 +592,7 @@
   <link name="arm2_link_6">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -619,7 +619,7 @@
   <link name="arm2_link_7">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -646,7 +646,7 @@
   <link name="arm2_link_8">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -673,7 +673,7 @@
   <link name="arm2_link_9">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -700,7 +700,7 @@
   <link name="arm2_link_10">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -751,7 +751,7 @@
   <link name="arm3_link_1">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -777,7 +777,7 @@
   <link name="arm3_link_2">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -804,7 +804,7 @@
   <link name="arm3_link_3">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -831,7 +831,7 @@
   <link name="arm3_link_4">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -858,7 +858,7 @@
   <link name="arm3_link_5">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -885,7 +885,7 @@
   <link name="arm3_link_6">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -912,7 +912,7 @@
   <link name="arm3_link_7">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -939,7 +939,7 @@
   <link name="arm3_link_8">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -966,7 +966,7 @@
   <link name="arm3_link_9">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -993,7 +993,7 @@
   <link name="arm3_link_10">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1044,7 +1044,7 @@
   <link name="arm4_link_1">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1070,7 +1070,7 @@
   <link name="arm4_link_2">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1097,7 +1097,7 @@
   <link name="arm4_link_3">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1124,7 +1124,7 @@
   <link name="arm4_link_4">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1151,7 +1151,7 @@
   <link name="arm4_link_5">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1178,7 +1178,7 @@
   <link name="arm4_link_6">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1205,7 +1205,7 @@
   <link name="arm4_link_7">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1232,7 +1232,7 @@
   <link name="arm4_link_8">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1259,7 +1259,7 @@
   <link name="arm4_link_9">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>
@@ -1286,7 +1286,7 @@
   <link name="arm4_link_10">
     <visual>
       <geometry>
-        <mesh filename="meshes/single_segment.dae" scale="0.0006 0.0006 0.00030000000000000003"/>
+        <cylinder length="0.03" radius="0.01"/>
       </geometry>
       <origin xyz="0 0 0.015"/>
     </visual>

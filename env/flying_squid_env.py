@@ -178,13 +178,22 @@ class FlyingSquidEnv(VecEnv):
         self.des_dir = np.array([np.sin(theta), np.cos(theta)]).T
         
         # Init Genesis Scene
-        self.drone = self.scene.add_entity(
-            gs.morphs.URDF(
-                file="./assets/drone_w_arms.urdf",  # Path to your URDF file
-                fixed=True,
-                merge_fixed_links=False,
-            ), visualize_contact=self.debug
-        )
+        if self.vis:
+            self.drone = self.scene.add_entity(
+                gs.morphs.URDF(
+                    file="./assets/drone_w_arms.urdf",  # Path to your URDF file
+                    fixed=True,
+                    merge_fixed_links=False,
+                ), visualize_contact=self.debug
+            )
+        else:
+            self.drone = self.scene.add_entity(
+                gs.morphs.URDF(
+                    file="./assets/drone_w_arms_simple.urdf",  # Path to your URDF file
+                    fixed=True,
+                    merge_fixed_links=False,
+                ), visualize_contact=self.debug
+            )
 
         # Arm parameters
         self.K = 5.0 * np.eye(10 * 4)
@@ -284,7 +293,7 @@ class FlyingSquidEnv(VecEnv):
 
                 # Set position of obstacle
                 self.box_obstacles[radius_idx][i].set_pos(pos[np.newaxis, :], envs_idx=[env_idx[idx]])
-                self.box_obstacles[radius_idx][i].set_quat(quat[np.newaxis, :], env_idx[idx])
+                self.box_obstacles[radius_idx][i].set_quat(quat[np.newaxis, :], envs_idx=[env_idx[idx]])
 
     def _generate_corridor(self, width, angle, env_idx):
         # Ensure `angle` is a column vector of shape (len(env_idx), 1) for broadcasting

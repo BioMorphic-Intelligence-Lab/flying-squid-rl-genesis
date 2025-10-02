@@ -22,9 +22,19 @@
     <xacro:macro name="drone_base" params="prefix">        
         <link name="${prefix}_base">
             <visual>
-                <origin xyz="0 0 0" rpy="${pi2} 0 0"/>
+                <xacro:if value="$(arg full_visuals)">
+                    <origin xyz="0 0 0" rpy="${pi2} 0 0"/> 
+                </xacro:if>
+                <xacro:unless value="$(arg full_visuals)">
+                    <origin xyz="0 0 ${-l3*0.1}" rpy="0 0 0"/>
+                </xacro:unless>
                 <geometry>
-                    <mesh filename="./meshes/Holybro-X500-V2-no-landinggear.dae" scale="0.001 0.001 0.001"/>
+                    <xacro:if value="$(arg full_visuals)">
+                        <mesh filename="./meshes/Holybro-X500-V2-no-landinggear.dae" scale="0.001 0.001 0.001"/>
+                    </xacro:if>
+                    <xacro:unless value="$(arg full_visuals)">
+                        <box size="${l1} ${l2} ${l3}"/>
+                    </xacro:unless>
                 </geometry>
             </visual>
             <collision>
@@ -42,9 +52,20 @@
 
         <link name="${prefix}_prop1">
             <visual>
-                <origin xyz="0 0 0.02" rpy="0 0 0"/>
+                <xacro:if value="$(arg full_visuals)">
+                    <origin xyz="0 0 0.02" rpy="0 0 0"/>
+                </xacro:if>
+                <xacro:unless value="$(arg full_visuals)">
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                </xacro:unless>
+                
                 <geometry>
-                    <mesh filename="./meshes/1345_prop_ccw.dae" scale="0.75 0.75 0.75"/>
+                    <xacro:if value="$(arg full_visuals)">
+                        <mesh filename="./meshes/1345_prop_ccw.dae" scale="0.75 0.75 0.75"/>
+                    </xacro:if>
+                    <xacro:unless value="$(arg full_visuals)">
+                        <cylinder radius="0.125" length="0.01"/>
+                    </xacro:unless>
                 </geometry>
             </visual>
             <collision>
@@ -63,9 +84,19 @@
 
         <link name="${prefix}_prop2">
             <visual>
-                <origin xyz="0 0 0.02" rpy="0 0 0"/>
+                <xacro:if value="$(arg full_visuals)">
+                    <origin xyz="0 0 0.02" rpy="0 0 0"/>
+                </xacro:if>
+                <xacro:unless value="$(arg full_visuals)">
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                </xacro:unless>
                 <geometry>
-                    <mesh filename="./meshes/1345_prop_cw.dae" scale="0.75 0.75 0.75"/>
+                    <xacro:if value="$(arg full_visuals)">
+                        <mesh filename="./meshes/1345_prop_cw.dae" scale="0.75 0.75 0.75"/>
+                    </xacro:if>
+                    <xacro:unless value="$(arg full_visuals)">
+                        <cylinder radius="0.125" length="0.01"/>
+                    </xacro:unless>
                 </geometry>
             </visual>
             <collision>
@@ -84,9 +115,19 @@
 
         <link name="${prefix}_prop3">
             <visual>
-                <origin xyz="0 0 0.02" rpy="0 0 0"/>
+                <xacro:if value="$(arg full_visuals)">
+                    <origin xyz="0 0 0.02" rpy="0 0 0"/>
+                </xacro:if>
+                <xacro:unless value="$(arg full_visuals)">
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                </xacro:unless>
                 <geometry>
-                    <mesh filename="./meshes/1345_prop_ccw.dae" scale="0.75 0.75 0.75"/>
+                    <xacro:if value="$(arg full_visuals)">
+                        <mesh filename="./meshes/1345_prop_ccw.dae" scale="0.75 0.75 0.75"/>
+                    </xacro:if>
+                    <xacro:unless value="$(arg full_visuals)">
+                        <cylinder radius="0.125" length="0.01"/>
+                    </xacro:unless>
                 </geometry>
             </visual>
             <collision>
@@ -105,9 +146,19 @@
 
         <link name="${prefix}_prop4">
             <visual>
-                <origin xyz="0 0 0.02" rpy="0 0 0"/>
+                <xacro:if value="$(arg full_visuals)">
+                    <origin xyz="0 0 0.02" rpy="0 0 0"/>
+                </xacro:if>
+                <xacro:unless value="$(arg full_visuals)">
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                </xacro:unless>
                 <geometry>
-                    <mesh filename="./meshes/1345_prop_cw.dae" scale="0.75 0.75 0.75"/>
+                    <xacro:if value="$(arg full_visuals)">
+                        <mesh filename="./meshes/1345_prop_cw.dae" scale="0.75 0.75 0.75"/>
+                    </xacro:if>
+                    <xacro:unless value="$(arg full_visuals)">
+                        <cylinder radius="0.125" length="0.01"/>
+                    </xacro:unless>
                 </geometry>
             </visual>
             <collision>

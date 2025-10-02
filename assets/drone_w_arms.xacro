@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="drone_w_arms">
 
+    <xacro:arg name="full_visuals" default="true"/>
 
     <xacro:property name="min_ax" value="-1000"/>
     <xacro:property name="max_ax" value="1000"/>
