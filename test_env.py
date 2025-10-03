@@ -1,5 +1,5 @@
 import argparse
-import numpy as np
+import torch
 import genesis as gs
 import matplotlib.pyplot as plt
 from baseline.baseline import Baseline
@@ -36,13 +36,13 @@ def main():
     obs = env.reset()
 
     if args.plot:
-        p_gt = np.zeros([n_steps, env.num_envs, 3])
-        v_gt = np.zeros([n_steps, env.num_envs, 3]) 
-        omega_gt = np.zeros([n_steps, env.num_envs, 1])
-        v_des = np.zeros([n_steps, env.num_envs, 3])
-        omega_des = np.zeros([n_steps, env.num_envs, 1])
+        p_gt = torch.zeros([n_steps, env.num_envs, 3])
+        v_gt = torch.zeros([n_steps, env.num_envs, 3])
+        omega_gt = torch.zeros([n_steps, env.num_envs, 1])
+        v_des = torch.zeros([n_steps, env.num_envs, 3])
+        omega_des = torch.zeros([n_steps, env.num_envs, 1])
 
-    a = np.zeros([env.num_envs, 3])
+    a = torch.zeros([env.num_envs, 3])
     acc_reward = 0
 
     if args.record:
@@ -55,7 +55,8 @@ def main():
             #a[j, :] = [0.5, # theta / np.pi
             #           1.0, # ||v|| / MAX_SPEED
             #           0.1] # omega / MAX_RATE
-            a[j, :], _ = model.predict(obs_j)
+            pred, _ = model.predict(obs_j)
+            a[j, :] = torch.as_tensor(pred, dtype=torch.float32)
 
         obs, rewards, dones, infos = env.step(a)
 
@@ -63,21 +64,25 @@ def main():
         print(f"Accumulative Reward: {acc_reward}")
 
         if args.plot:
-            p_gt[t, :, :] = env.drone.get_dofs_position()[:, :3]
-            v_gt[t, :, :] = env.drone.get_dofs_velocity()[:, :3]
-            omega_gt[t, :, :] = env.drone.get_dofs_velocity()[:, 3]
-            angle = np.arctan2(obs['des_dir'][0][1], obs['des_dir'][0][0]) - a[0, 0] * np.pi
-            v_des[t, :, :] = env.MAX_LIN_VEL * (1 - a[0, 1]) * np.array([np.cos(angle), np.sin(angle), 0.0])
-            omega_des[t, :, :] = env.MAX_ROT_VEL * a[0, 2]
+            p_gt[t, :, :] = torch.tensor(env.drone.get_dofs_position())[:, :3]
+            v_gt[t, :, :] = torch.tensor(env.drone.get_dofs_velocity())[:, :3]
+            omega_gt[t, :, :] = torch.tensor(env.drone.get_dofs_velocity())[:, 3].unsqueeze(-1)
+            angle = torch.atan2(obs['des_dir'][0][1], obs['des_dir'][0][0]) - a[0, 0] * torch.pi
+            v_des[t, :, :] = (
+                env.MAX_LIN_VEL
+                * (1 - a[0, 1])
+                * torch.tensor([torch.cos(angle), torch.sin(angle), torch.tensor(0.0)])
+            )
+            omega_des[t, :, :] = (env.MAX_ROT_VEL * a[0, 2]).reshape(1, 1)
 
-        if np.isnan(env.drone.get_dofs_position()[:3]).any():
+        if torch.isnan(env.drone.get_dofs_position()[:3]).any().item():
             print("NaN detected in position. Exiting.")
             break
 
         if args.record and t % int(1.0 / (24.0 * args.dt)) == 0:
-            squid_pos = np.array(env.drone.get_dofs_position())[0, :3]
-            env.cam.set_pose(pos=squid_pos + np.array([-0, -10, 10]),
-                             lookat=squid_pos)
+            squid_pos = torch.tensor(env.drone.get_dofs_position())[0, :3]
+            env.cam.set_pose(pos=(squid_pos + torch.tensor([0.0, -10.0, 10.0])).tolist(),
+                             lookat=squid_pos.tolist())
             env.cam.render()
 
     if args.record:
@@ -86,18 +91,19 @@ def main():
 
     if args.plot:
         fig, axs = plt.subplots(4, 1, figsize=(10, 8))
-        #axs[0].plot(np.arange(n_steps) * args.dt, p_gt[:, :, 0])
-        axs[0].plot(np.arange(n_steps) * args.dt, v_gt[:, :, 0], "--")
-        axs[0].plot(np.arange(n_steps) * args.dt, v_des[:, :, 0], ":", color="black")
-        #axs[1].plot(np.arange(n_steps) * args.dt, p_gt[:, :, 1])
-        axs[1].plot(np.arange(n_steps) * args.dt, v_gt[:, :, 1], "--")
-        axs[1].plot(np.arange(n_steps) * args.dt, v_des[:, :, 1], ":", color="black")
-        #axs[2].plot(np.arange(n_steps) * args.dt, p_gt[:, :, 2])
-        axs[2].plot(np.arange(n_steps) * args.dt, v_gt[:, :, 2], "--")
-        axs[2].plot(np.arange(n_steps) * args.dt, v_des[:, :, 2], ":", color="black")
+        time_axis = (torch.arange(n_steps, dtype=torch.float32) * args.dt).numpy()
+        #axs[0].plot(time_axis, p_gt[:, :, 0].numpy())
+        axs[0].plot(time_axis, v_gt[:, :, 0].numpy(), "--")
+        axs[0].plot(time_axis, v_des[:, :, 0].numpy(), ":", color="black")
+        #axs[1].plot(time_axis, p_gt[:, :, 1].numpy())
+        axs[1].plot(time_axis, v_gt[:, :, 1].numpy(), "--")
+        axs[1].plot(time_axis, v_des[:, :, 1].numpy(), ":", color="black")
+        #axs[2].plot(time_axis, p_gt[:, :, 2].numpy())
+        axs[2].plot(time_axis, v_gt[:, :, 2].numpy(), "--")
+        axs[2].plot(time_axis, v_des[:, :, 2].numpy(), ":", color="black")
 
-        axs[3].plot(np.arange(n_steps) * args.dt, omega_gt[:, :, 0], "--")
-        axs[3].plot(np.arange(n_steps) * args.dt, omega_des[:, :, 0], ":", color="black")
+        axs[3].plot(time_axis, omega_gt[:, :, 0].numpy(), "--")
+        axs[3].plot(time_axis, omega_des[:, :, 0].numpy(), ":", color="black")
 
         plt.show()
 

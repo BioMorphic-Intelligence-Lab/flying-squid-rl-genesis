@@ -1,10 +1,12 @@
 import os
 import sys
 import torch
+
 from env import FlyingSquidEnv
 from stable_baselines3 import PPO
 
 from stable_baselines3.common.vec_env import VecMonitor
+
 
 def main(argv):
 
@@ -19,9 +21,9 @@ def main(argv):
     
     env = VecMonitor(
         FlyingSquidEnv(num_envs=50, max_steps=3000, corridor=True,
-                       cylinder_obstacle_density=0.0,
-                       box_obstacle_density=0.05,
-                       dt=0.01, history_duration=15.0, observation_length=10)
+                    cylinder_obstacle_density=0.0,
+                    box_obstacle_density=0.05,
+                    dt=0.01, history_duration=15.0, observation_length=10)
     )
 
     if "-c" in argv:
