@@ -3,8 +3,8 @@
 
     <xacro:property name="pi2" value="${pi * 0.5}" />
 
-    <xacro:property name="l1" value="0.45" />
-    <xacro:property name="l2" value="0.45" />
+    <xacro:property name="l1" value="0.35" />
+    <xacro:property name="l2" value="0.35" />
     <xacro:property name="l3" value="0.1" />
 
     <xacro:property name="arm_x" value="0.175"/>
@@ -71,7 +71,7 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
-                    <cylinder radius="0.125" length="0.01"/>
+                    <cylinder radius="0.025" length="0.01"/>
                 </geometry>
             </collision>
             <inertial>
@@ -102,7 +102,7 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
-                    <cylinder radius="0.125" length="0.01"/>
+                    <cylinder radius="0.025" length="0.01"/>
                 </geometry>
             </collision>
             <inertial>
@@ -133,7 +133,7 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
-                    <cylinder radius="0.125" length="0.01"/>
+                    <cylinder radius="0.025" length="0.01"/>
                 </geometry>
             </collision>
             <inertial>
@@ -164,7 +164,7 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
-                    <cylinder radius="0.125" length="0.01"/>
+                    <cylinder radius="0.025" length="0.01"/>
                 </geometry>
             </collision>
             <inertial>

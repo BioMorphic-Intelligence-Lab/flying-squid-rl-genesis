@@ -567,6 +567,7 @@ class FlyingSquidEnv(VecEnv):
 
         # Convert to numpy before returning because the VecEnvMonitor requires it
         rewards = rewards.cpu().numpy()
+        dones = dones.cpu().numpy()
     
         return obs, rewards, dones, infos
     
